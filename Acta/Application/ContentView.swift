@@ -2,13 +2,16 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Environment(DocumentManager.self) private var documentManager: DocumentManager?
     @State private var isImportingInvoice = false
     
     var body: some View {
         InvoicesView()
-            .invoiceImporter(isPresented: $isImportingInvoice)
+            .invoiceImporter(isPresented: $isImportingInvoice, documentManager: documentManager)
             .onReceive(NotificationCenter.default.publisher(for: .importInvoice)) { _ in
-                isImportingInvoice = true
+                if documentManager != nil {
+                    isImportingInvoice = true
+                }
             }
     }
 }

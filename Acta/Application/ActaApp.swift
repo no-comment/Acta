@@ -1,7 +1,7 @@
-import SwiftUI
-import SwiftData
-import SwiftCloudDrive
 import os
+import SwiftCloudDrive
+import SwiftData
+import SwiftUI
 
 private let logger = Logger(subsystem: "xyz.no-comment.Acta", category: "iCloud")
 
@@ -12,25 +12,23 @@ struct ActaApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
-                if let documentManager {
-                    ContentView()
-                        .environment(documentManager)
-                } else if let initError {
-                    ContentUnavailableView {
-                        Label("iCloud Unavailable", systemImage: "icloud.slash")
-                    } description: {
-                        Text(initError.localizedDescription)
-                    } actions: {
-                        Button("Retry") {
-                            self.initError = nil
-                            Task { await initializeiCloud() }
-                        }
+            if let initError {
+                ContentUnavailableView {
+                    Label("iCloud Unavailable", systemImage: "icloud.slash")
+                } description: {
+                    Text(initError.localizedDescription)
+                } actions: {
+                    Button("Retry") {
+                        self.initError = nil
+                        Task { await initializeiCloud() }
                     }
                 }
-            }
-            .task {
-                await initializeiCloud()
+            } else {
+                ContentView()
+                    .environment(documentManager)
+                    .task {
+                        await initializeiCloud()
+                    }
             }
         }
         .modelContainer(DataStoreConfig.container)

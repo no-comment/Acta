@@ -15,7 +15,7 @@ import UniformTypeIdentifiers
 ///     .invoiceImporter(isPresented: $showImporter)
 /// ```
 struct InvoiceImporterModifier: ViewModifier {
-    @Environment(DocumentManager.self) private var documentManager
+    let documentManager: DocumentManager?
     
     @Binding var isPresented: Bool
     
@@ -65,6 +65,12 @@ struct InvoiceImporterModifier: ViewModifier {
     }
     
     private func handleFileImport(_ result: Result<[URL], Error>) {
+        guard let documentManager else {
+            errorMessage = "iCloud is not available"
+            showError = true
+            return
+        }
+        
         importTask?.cancel()
         
         importTask = Task { @MainActor in
@@ -87,6 +93,12 @@ struct InvoiceImporterModifier: ViewModifier {
     }
     
     private func performImport(url: URL) {
+        guard let documentManager else {
+            errorMessage = "iCloud is not available"
+            showError = true
+            return
+        }
+        
         importTask?.cancel()
         
         importTask = Task { @MainActor in
@@ -104,9 +116,11 @@ struct InvoiceImporterModifier: ViewModifier {
 
 extension View {
     /// Adds invoice importing capabilities with duplicate detection.
-    /// - Parameter isPresented: A binding that controls when the file importer is shown.
+    /// - Parameters:
+    ///   - isPresented: A binding that controls when the file importer is shown.
+    ///   - documentManager: The document manager to use for importing. If nil, import will show an error.
     /// - Returns: A view with invoice importing capabilities.
-    func invoiceImporter(isPresented: Binding<Bool>) -> some View {
-        modifier(InvoiceImporterModifier(isPresented: isPresented))
+    func invoiceImporter(isPresented: Binding<Bool>, documentManager: DocumentManager?) -> some View {
+        modifier(InvoiceImporterModifier(documentManager: documentManager, isPresented: isPresented))
     }
 }
