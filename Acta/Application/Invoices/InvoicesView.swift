@@ -12,11 +12,36 @@ struct InvoicesView: View {
     @State private var sortOrder = [KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
     
+    private var showInspector: Binding<Bool> {
+        Binding(
+            get: { selection != nil },
+            set: { newValue in
+                if newValue == false {
+                    selection = nil
+                }
+            }
+        )
+    }
+    
     private var sortedInvoices: [Invoice] {
         invoices.sorted(using: sortOrder)
     }
     
     var body: some View {
+        table
+            .frame(minWidth: 300, minHeight: 300)
+            .toolbar(content: { self.toolbar })
+            .inspector(isPresented: showInspector, content: {
+                if let selectedID = selection, let invoice = invoices.first(where: { $0.id == selectedID }) {
+                    InvoiceInspectorView(for: invoice)
+                } else {
+                    ContentUnavailableView("No Invoice Selected", systemImage: "document")
+                }
+            })
+            .navigationTitle("Invoices")
+    }
+    
+    private var table: some View {
         Table(sortedInvoices, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
             TableColumn("") { invoice in
                 Image(systemName: invoice.isManuallyChecked ? "checkmark.circle.fill" : "circle")
@@ -63,9 +88,11 @@ struct InvoicesView: View {
                 .customizationID("groupColumn-\(group.title)")
             }
         }
-        .frame(minWidth: 300, minHeight: 300)
-        .toolbar(content: { self.toolbar })
-        .navigationTitle("Invoices")
+        .contextMenu(forSelectionType: Invoice.ID.self) { items in
+            
+        } primaryAction: { items in
+            print("Double click")
+        }
     }
     
     @ToolbarContentBuilder
