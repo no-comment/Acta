@@ -55,8 +55,8 @@ final class OCRManager {
         let mockVendors = ["Acme Corporation", "Global Supplies Inc.", "TechVendor GmbH", "Office Essentials Ltd."]
         let mockCurrencies = ["USD", "EUR", "GBP"]
 
-        // Use document hash to seed random generation for consistency
-        let seed = document.contentHash.isEmpty ? document.filename.hashValue : document.contentHash.hashValue
+        // Use filename hash to seed random generation for consistency
+        let seed = document.filename.hashValue
         var generator = SeededRandomNumberGenerator(seed: UInt64(abs(seed)))
 
         let vendorName = mockVendors.randomElement(using: &generator)

@@ -117,6 +117,55 @@ final class DocumentManager {
             .appendingPathComponent(document.filename)
     }
     
+    /// Checks if a file with the same content already exists in the specified folder
+    /// Uses a two-phase approach: first compares file sizes (fast), then byte comparison if sizes match
+    /// - Parameters:
+    ///   - url: The URL of the file to check
+    ///   - type: The document type (determines which folder to check)
+    /// - Returns: The existing document if a duplicate is found, nil otherwise
+    func findDuplicate(of url: URL, type: DocumentType) throws -> DocumentFile? {
+        // Get security scoped access if needed
+        let gotAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if gotAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        // Get source file size first (fast check)
+        let sourceAttributes = try FileManager.default.attributesOfItem(atPath: url.path)
+        guard let sourceSize = sourceAttributes[.size] as? Int64 else {
+            return nil
+        }
+        
+        // Get all documents in the folder
+        let documents = type == .invoice ? invoices : bankStatements
+        
+        // Find documents with matching size
+        let sameSizeDocuments = documents.filter { $0.fileSize == sourceSize }
+        
+        // If no size matches, no duplicates possible
+        guard !sameSizeDocuments.isEmpty else {
+            return nil
+        }
+        
+        // Read source file for byte comparison
+        let sourceData = try Data(contentsOf: url)
+        
+        // Compare bytes with same-size files
+        for document in sameSizeDocuments {
+            let documentURL = getURL(for: document, type: type)
+            guard let documentData = try? Data(contentsOf: documentURL) else { continue }
+            
+            if sourceData == documentData {
+                logger.info("🔍 Found duplicate: \(document.filename)")
+                return document
+            }
+        }
+        
+        return nil
+    }
+    
     // MARK: - Private Helpers
     
     private func importDocument(url: URL, type: DocumentType) async throws -> DocumentFile {
