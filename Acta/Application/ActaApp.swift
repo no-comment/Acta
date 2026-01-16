@@ -74,4 +74,18 @@ struct ActaApp: App {
             initError = .unknown(error.localizedDescription)
         }
     }
+    
+    enum MainView: String, Identifiable, CaseIterable {
+        case invoices = "invoices"
+        case bankStatements = "bank-statements"
+        
+        var id: String { self.rawValue }
+        
+        var title: String {
+            switch self {
+            case .invoices: "Invoices"
+            case .bankStatements: "Bank Statements"
+            }
+        }
+    }
 }

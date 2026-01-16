@@ -41,7 +41,6 @@ struct InvoicesView: View {
             .inspector(isPresented: showInspector, content: {
                 InvoiceInspectorView(for: $selection)
             })
-            .navigationTitle("Invoices")
             .invoiceDropImporter(documentManager: documentManager)
     }
     
