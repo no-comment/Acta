@@ -37,7 +37,7 @@ extension Invoice {
         guard var amount = preTaxAmount else { return "N/A" }
         guard let currency else { return "N/A" }
         
-        if self.direction == .outgoing {
+        if self.direction == .incoming {
             amount.negate()
         }
         
