@@ -1,10 +1,3 @@
-//
-//  ActaUITests.swift
-//  ActaUITests
-//
-//  Created by Cameron Shemilt on 16.01.26.
-//
-
 import XCTest
 
 final class ActaUITests: XCTestCase {

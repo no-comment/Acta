@@ -1,18 +1,18 @@
-//
-//  Item.swift
-//  Acta
-//
-//  Created by Cameron Shemilt on 16.01.26.
-//
-
 import Foundation
 import SwiftData
 
 @Model
-final class Item {
+final class Invoice {
     var timestamp: Date
     
     init(timestamp: Date) {
         self.timestamp = timestamp
+    }
+}
+
+// MARK: Mock Data
+extension Invoice {
+    static func generateMockData(modelContext: ModelContext) {
+        
     }
 }
