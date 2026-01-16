@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		45CB4A2D2F1A92D2004CD2DF /* SwiftCloudDrive in Frameworks */ = {isa = PBXBuildFile; productRef = 45CB4A2C2F1A92D2004CD2DF /* SwiftCloudDrive */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		CB84AFE42F1A707F001CD6E1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +33,22 @@
 		CB84AFED2F1A707F001CD6E1 /* ActaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ActaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		45CB4A382F1AA09F004CD2DF /* Exceptions for "Acta" folder in "Acta" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CB84AFD32F1A707D001CD6E1 /* Acta */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CB84AFD62F1A707D001CD6E1 /* Acta */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				45CB4A382F1AA09F004CD2DF /* Exceptions for "Acta" folder in "Acta" target */,
+			);
 			path = Acta;
 			sourceTree = "<group>";
 		};
@@ -52,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45CB4A2D2F1A92D2004CD2DF /* SwiftCloudDrive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +130,7 @@
 			);
 			name = Acta;
 			packageProductDependencies = (
+				45CB4A2C2F1A92D2004CD2DF /* SwiftCloudDrive */,
 			);
 			productName = Acta;
 			productReference = CB84AFD42F1A707D001CD6E1 /* Acta.app */;
@@ -195,6 +214,9 @@
 			);
 			mainGroup = CB84AFCB2F1A707D001CD6E1;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				45CB4A2B2F1A92D2004CD2DF /* XCRemoteSwiftPackageReference "SwiftCloudDrive" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CB84AFD52F1A707D001CD6E1 /* Products */;
 			projectDirPath = "";
@@ -404,6 +426,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Acta/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -437,6 +460,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Acta/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -575,6 +599,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		45CB4A2B2F1A92D2004CD2DF /* XCRemoteSwiftPackageReference "SwiftCloudDrive" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/drewmccormack/SwiftCloudDrive";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		45CB4A2C2F1A92D2004CD2DF /* SwiftCloudDrive */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45CB4A2B2F1A92D2004CD2DF /* XCRemoteSwiftPackageReference "SwiftCloudDrive" */;
+			productName = SwiftCloudDrive;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CB84AFCC2F1A707D001CD6E1 /* Project object */;
 }
