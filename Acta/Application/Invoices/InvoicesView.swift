@@ -32,11 +32,7 @@ struct InvoicesView: View {
             .frame(minWidth: 300, minHeight: 300)
             .toolbar(content: { self.toolbar })
             .inspector(isPresented: showInspector, content: {
-                if let selectedID = selection, let invoice = invoices.first(where: { $0.id == selectedID }) {
-                    InvoiceInspectorView(for: invoice)
-                } else {
-                    ContentUnavailableView("No Invoice Selected", systemImage: "document")
-                }
+                InvoiceInspectorView(for: $selection)
             })
             .navigationTitle("Invoices")
     }
