@@ -5,22 +5,22 @@ import SwiftData
 final class Invoice {
     var path: String?
     var tags: [Tag]?
-    var isManuallyChecked: Bool = false
-    
+    var status: Status = Invoice.Status.new
+
     var vendorName: String?
     var date: Date?
     var invoiceNo: String?
-    
+
     var totalAmount: Double?
     var preTaxAmount: Double?
     var taxPercentage: Double?
     var currency: String?
     var direction: Direction?
-    
-    init(path: String? = nil, tags: [Tag], isManuallyChecked: Bool = false, vendorName: String? = nil, date: Date? = nil, invoiceNo: String? = nil, totalAmount: Double? = nil, preTaxAmount: Double? = nil, taxPercentage: Double? = nil, currency: String? = nil, direction: Direction? = nil) {
+
+    init(path: String? = nil, tags: [Tag], status: Status = .new, vendorName: String? = nil, date: Date? = nil, invoiceNo: String? = nil, totalAmount: Double? = nil, preTaxAmount: Double? = nil, taxPercentage: Double? = nil, currency: String? = nil, direction: Direction? = nil) {
         self.path = path
         self.tags = tags
-        self.isManuallyChecked = isManuallyChecked
+        self.status = status
         self.vendorName = vendorName
         self.date = date
         self.invoiceNo = invoiceNo
@@ -68,10 +68,43 @@ extension Invoice {
 }
 
 extension Invoice {
+    enum Status: String, Identifiable, Codable, Comparable, CaseIterable {
+        case new = "new"
+        case processed = "processed"
+        case verified = "verified"
+
+        var id: String { self.rawValue }
+
+        var iconName: String {
+            switch self {
+            case .new: return "circle"
+            case .processed: return "circle.inset.filled"
+            case .verified: return "checkmark.circle.fill"
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .new: return "New"
+            case .processed: return "Processed"
+            case .verified: return "Verified"
+            }
+        }
+
+        static func < (lhs: Status, rhs: Status) -> Bool {
+            let order: [Status] = [.new, .processed, .verified]
+            guard let lhsIndex = order.firstIndex(of: lhs),
+                  let rhsIndex = order.firstIndex(of: rhs) else {
+                return false
+            }
+            return lhsIndex < rhsIndex
+        }
+    }
+
     enum Direction: String, Identifiable, Codable {
         case incoming = "incoming"
         case outgoing = "outgoing"
-        
+
         var id: String { self.rawValue }
     }
 }
@@ -85,7 +118,7 @@ extension Invoice {
                 
         let invoice1 = Invoice(tags: [nocommentTag], vendorName: "Wilhelm Gymnasium", invoiceNo: "PW25-01", taxPercentage: 0.19)
         let invoice2 = Invoice(tags: [privateTag], vendorName: "Apple")
-        let invoice3 = Invoice(tags: [nocommentTag], isManuallyChecked: true, vendorName: "Google", date: Date.now, totalAmount: 12, preTaxAmount: 10, taxPercentage: 0.22, currency: "$", direction: .incoming)
+        let invoice3 = Invoice(tags: [nocommentTag], status: .verified, vendorName: "Google", date: Date.now, totalAmount: 12, preTaxAmount: 10, taxPercentage: 0.22, currency: "$", direction: .incoming)
                 
         modelContext.insert(invoice1)
         modelContext.insert(invoice2)

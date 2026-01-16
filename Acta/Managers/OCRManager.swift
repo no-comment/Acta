@@ -68,7 +68,7 @@ final class OCRManager {
         let invoice = Invoice(
             path: document.filename,
             tags: [],
-            isManuallyChecked: false,
+            status: .processed,
             vendorName: vendorName,
             date: document.modificationDate,
             invoiceNo: "INV-\(String(format: "%06d", Int.random(in: 1...999999, using: &generator)))",

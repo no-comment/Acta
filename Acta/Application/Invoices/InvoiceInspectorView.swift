@@ -5,8 +5,8 @@ struct InvoiceInspectorView: View {
     @Query private var invoices: [Invoice]
     @Binding private var id: Invoice.ID?
     
-    @State private var isManuallyChecked: Bool = false
-    
+    @State private var status: Invoice.Status = .new
+
     @State private var vendorName: String = ""
     @State private var date: Date = Date.distantPast
     @State private var invoiceNo: String = ""
@@ -78,6 +78,19 @@ struct InvoiceInspectorView: View {
                 }
                 .labelsHidden()
             }
+
+            Labeled("Status") {
+                Picker("Invoice Status", selection: $status) {
+                    ForEach(Invoice.Status.allCases) { status in
+                        HStack {
+                            Image(systemName: status.iconName)
+                            Text(status.label)
+                        }
+                        .tag(status)
+                    }
+                }
+                .labelsHidden()
+            }
         }
     }
     
@@ -87,7 +100,7 @@ struct InvoiceInspectorView: View {
     
     private func onIDChange(oldValue: Invoice.ID?, newValue: Invoice.ID?) {
         if newValue != oldValue, let selectedID = newValue, let invoice = invoices.first(where: { $0.id == selectedID }) {
-            self.isManuallyChecked = invoice.isManuallyChecked
+            self.status = invoice.status
             self.vendorName = invoice.vendorName ?? "N/A"
             self.date = invoice.date ?? Date.distantPast
             self.invoiceNo = invoice.invoiceNo ?? "N/A"

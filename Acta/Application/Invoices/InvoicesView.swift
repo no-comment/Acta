@@ -9,7 +9,7 @@ struct InvoicesView: View {
     
     @SceneStorage("BugReportTableConfig") private var columnCustomization: TableColumnCustomization<Invoice>
     
-    @State private var sortOrder = [KeyPathComparator(\Invoice.vendorName)]
+    @State private var sortOrder = [KeyPathComparator(\Invoice.status), KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
     
     private var showInspector: Binding<Bool> {
@@ -39,11 +39,12 @@ struct InvoicesView: View {
     
     private var table: some View {
         Table(sortedInvoices, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
-            TableColumn("") { invoice in
-                Image(systemName: invoice.isManuallyChecked ? "checkmark.circle.fill" : "circle")
+            TableColumn("", value: \.status.rawValue) { invoice in
+                Image(systemName: invoice.status.iconName)
+                    .help(invoice.status.label)
             }
             .width(16)
-            .customizationID("isManuallyChecked")
+            .customizationID("status")
             
             TableColumn("Vendor", value: \.vendorName)
                 .customizationID("vendorName")
