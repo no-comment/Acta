@@ -39,6 +39,17 @@ struct ActaApp: App {
                 }
                 .keyboardShortcut("i", modifiers: [.command])
                 .disabled(documentManager == nil)
+                
+                Divider()
+                
+                Button("Open Invoices Folder in Finder") {
+                    if let documentManager {
+                        let folderURL = documentManager.getFolderURL(for: .invoice)
+                        NSWorkspace.shared.open(folderURL)
+                    }
+                }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
+                .disabled(documentManager == nil)
             }
         }
     }

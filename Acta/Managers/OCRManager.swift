@@ -9,20 +9,20 @@ final class OCRManager {
 
     /// Processes a document file using OCR to extract invoice data
     /// - Parameter document: The document file to process
-    /// - Returns: An Invoice object with extracted data
+    /// - Returns: An OCRResult with extracted data
     /// - Throws: OCRError if the file type is not supported or processing fails
-    func processInvoice(from document: DocumentFile) async throws -> Invoice {
+    func processInvoice(from document: DocumentFile) async throws -> OCRResult {
         // Validate that the document is an allowed invoice type
         try validateDocumentType(document)
 
         logger.info("🔍 Processing invoice: \(document.filename)")
 
         // TODO: Replace with actual OCR API call
-        let invoice = createMockInvoice(for: document)
+        let result = createMockResult(for: document)
 
         logger.info("✅ Invoice processed successfully: \(document.filename)")
 
-        return invoice
+        return result
     }
 
     // MARK: - Private Helpers
@@ -50,7 +50,7 @@ final class OCRManager {
         }
     }
 
-    private func createMockInvoice(for document: DocumentFile) -> Invoice {
+    private func createMockResult(for document: DocumentFile) -> OCRResult {
         // Generate mock invoice data based on the document
         let mockVendors = ["Acme Corporation", "Global Supplies Inc.", "TechVendor GmbH", "Office Essentials Ltd."]
         let mockCurrencies = ["USD", "EUR", "GBP"]
@@ -65,10 +65,7 @@ final class OCRManager {
         let taxPercentage = [0.07, 0.19, 0.20, 0.25].randomElement(using: &generator) ?? 0.19
         let totalAmount = (preTaxAmount * (1 + taxPercentage)).rounded(toPlaces: 2)
 
-        let invoice = Invoice(
-            path: document.filename,
-            tags: [],
-            status: .processed,
+        let result = OCRResult(
             vendorName: vendorName,
             date: document.modificationDate,
             invoiceNo: "INV-\(String(format: "%06d", Int.random(in: 1...999999, using: &generator)))",
@@ -79,8 +76,21 @@ final class OCRManager {
             direction: .outgoing
         )
 
-        return invoice
+        return result
     }
+}
+
+// MARK: - OCR Result
+
+struct OCRResult {
+    let vendorName: String?
+    let date: Date?
+    let invoiceNo: String?
+    let totalAmount: Double?
+    let preTaxAmount: Double?
+    let taxPercentage: Double?
+    let currency: String?
+    let direction: Invoice.Direction?
 }
 
 // MARK: - Errors

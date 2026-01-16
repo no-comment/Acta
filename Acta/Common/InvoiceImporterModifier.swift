@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import UniformTypeIdentifiers
 
 /// A view modifier that adds invoice importing capabilities with duplicate detection.
@@ -15,6 +16,8 @@ import UniformTypeIdentifiers
 ///     .invoiceImporter(isPresented: $showImporter)
 /// ```
 struct InvoiceImporterModifier: ViewModifier {
+    @Environment(\.modelContext) private var modelContext
+    
     let documentManager: DocumentManager?
     
     @Binding var isPresented: Bool
@@ -83,8 +86,9 @@ struct InvoiceImporterModifier: ViewModifier {
                     duplicateDocument = duplicate
                     showDuplicateAlert = true
                 } else {
-                    try await documentManager.importInvoice(url: url)
-                }
+                        let document = try await documentManager.importInvoice(url: url)
+                        createInvoiceRecord(for: document)
+                    }
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
@@ -103,7 +107,8 @@ struct InvoiceImporterModifier: ViewModifier {
         
         importTask = Task { @MainActor in
             do {
-                try await documentManager.importInvoice(url: url)
+                let document = try await documentManager.importInvoice(url: url)
+                createInvoiceRecord(for: document)
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
@@ -111,6 +116,11 @@ struct InvoiceImporterModifier: ViewModifier {
             pendingImportURL = nil
             duplicateDocument = nil
         }
+    }
+    
+    private func createInvoiceRecord(for document: DocumentFile) {
+        let invoice = Invoice(path: document.filename, tags: [], status: .new)
+        modelContext.insert(invoice)
     }
 }
 

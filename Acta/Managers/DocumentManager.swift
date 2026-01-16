@@ -8,7 +8,7 @@ private let logger = Logger(subsystem: "xyz.no-comment.Acta", category: "Documen
 
 @MainActor
 @Observable
-final class DocumentManager {
+final class DocumentManager: CloudDriveObserver {
     private let drive: CloudDrive
     
     /// Content types allowed for invoice imports
@@ -18,7 +18,7 @@ final class DocumentManager {
         .gif, .tiff, .bmp, .webP
     ]
     
-    enum LoadingState {
+    enum LoadingState: Equatable {
         case idle
         case loading
         case loaded
@@ -29,12 +29,51 @@ final class DocumentManager {
     var bankStatements: [DocumentFile] = []
     var loadingState: LoadingState = .idle
     
+    /// Posted when documents change (added, updated, or removed)
+    static let documentsDidChangeNotification = Notification.Name("DocumentManagerDocumentsDidChange")
+    
     init(drive: CloudDrive) {
         self.drive = drive
+        self.drive.observer = self
         
         // Initialize in background
         Task {
             await initialize()
+        }
+    }
+    
+    // MARK: - CloudDriveObserver
+    
+    nonisolated func cloudDriveDidChange(_ drive: CloudDrive, rootRelativePaths: [RootRelativePath]) {
+        Task { @MainActor in
+            // Check if any of the changed paths are in our watched folders
+            let invoiceFolderPath = DocumentType.invoice.folderPath
+            let bankStatementFolderPath = DocumentType.bankStatement.folderPath
+            
+            var invoicesChanged = false
+            var bankStatementsChanged = false
+            
+            for path in rootRelativePaths {
+                let pathString = path.path
+                if pathString.hasPrefix(invoiceFolderPath) {
+                    invoicesChanged = true
+                } else if pathString.hasPrefix(bankStatementFolderPath) {
+                    bankStatementsChanged = true
+                }
+            }
+            
+            // Refresh the affected document lists
+            if invoicesChanged {
+                logger.info("📥 iCloud invoices changed, refreshing...")
+                try? await refreshDocuments(type: .invoice)
+                NotificationCenter.default.post(name: Self.documentsDidChangeNotification, object: self)
+            }
+            
+            if bankStatementsChanged {
+                logger.info("📥 iCloud bank statements changed, refreshing...")
+                try? await refreshDocuments(type: .bankStatement)
+                NotificationCenter.default.post(name: Self.documentsDidChangeNotification, object: self)
+            }
         }
     }
     
@@ -115,6 +154,14 @@ final class DocumentManager {
         return drive.rootDirectory
             .appendingPathComponent(type.folderPath)
             .appendingPathComponent(document.filename)
+    }
+    
+    /// Gets the URL for a document folder
+    /// - Parameter type: The type of document
+    /// - Returns: The local URL to the folder
+    func getFolderURL(for type: DocumentType) -> URL {
+        return drive.rootDirectory
+            .appendingPathComponent(type.folderPath)
     }
     
     /// Checks if a file with the same content already exists in the specified folder

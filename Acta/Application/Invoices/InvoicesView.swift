@@ -3,11 +3,14 @@ import SwiftData
 
 struct InvoicesView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(DocumentManager.self) private var documentManager: DocumentManager?
     @Query private var invoices: [Invoice]
     @Query private var tagGroups: [TagGroup]
     @Query private var tags: [Tag]
     
     @SceneStorage("BugReportTableConfig") private var columnCustomization: TableColumnCustomization<Invoice>
+    
+    @State private var isProcessingOCR = false
     
     @State private var sortOrder = [KeyPathComparator(\Invoice.status), KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
@@ -25,6 +28,10 @@ struct InvoicesView: View {
     
     private var sortedInvoices: [Invoice] {
         invoices.sorted(using: sortOrder)
+    }
+    
+    private var newInvoices: [Invoice] {
+        invoices.filter { $0.status == .new }
     }
     
     var body: some View {
@@ -122,6 +129,56 @@ struct InvoicesView: View {
             Button("Count", systemImage: "questionmark", role: .none, action: {
                 print("Invoices: \(invoices.count), TagGroups: \(tagGroups.count), Tags: \(tags.count)")
             })
+        }
+        
+        ToolbarItem {
+            Button("OCR All New", systemImage: "doc.text.viewfinder", action: processAllNewInvoices)
+                .disabled(newInvoices.isEmpty || isProcessingOCR || documentManager == nil)
+        }
+        
+        ToolbarItem {
+            Button("Import", systemImage: "square.and.arrow.down") {
+                NotificationCenter.default.post(name: .importInvoice, object: nil)
+            }
+            .disabled(documentManager == nil)
+        }
+    }
+    
+    private func processAllNewInvoices() {
+        guard let documentManager else { return }
+        
+        isProcessingOCR = true
+        
+        Task {
+            let ocrManager = OCRManager()
+            
+            for invoice in newInvoices {
+                guard let path = invoice.path else { continue }
+                
+                // Find the DocumentFile matching this invoice's path
+                guard let documentFile = documentManager.invoices.first(where: { $0.filename == path }) else {
+                    continue
+                }
+                
+                do {
+                    let result = try await ocrManager.processInvoice(from: documentFile)
+                    
+                    // Update the existing invoice with OCR results
+                    invoice.status = .processed
+                    invoice.vendorName = result.vendorName
+                    invoice.date = result.date
+                    invoice.invoiceNo = result.invoiceNo
+                    invoice.totalAmount = result.totalAmount
+                    invoice.preTaxAmount = result.preTaxAmount
+                    invoice.taxPercentage = result.taxPercentage
+                    invoice.currency = result.currency
+                    invoice.direction = result.direction
+                } catch {
+                    print("OCR failed for \(path): \(error.localizedDescription)")
+                }
+            }
+            
+            isProcessingOCR = false
         }
     }
 }
