@@ -42,6 +42,7 @@ struct InvoicesView: View {
                 InvoiceInspectorView(for: $selection)
             })
             .navigationTitle("Invoices")
+            .invoiceDropImporter(documentManager: documentManager)
     }
     
     private var table: some View {
