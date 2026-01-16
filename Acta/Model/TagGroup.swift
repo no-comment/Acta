@@ -4,7 +4,7 @@ import SwiftData
 @Model
 final class TagGroup {
     var title: String = "Untitled Tag Group"
-    var tags: [Tag]?
+    var tags: [Tag]? = []
     
     init(title: String) {
         self.title = title

@@ -5,8 +5,8 @@ import SwiftUI
 @Model
 final class Tag {
     var title: String = "Untitled Tag"
-    var group: TagGroup?
-    var invoices: [Invoice]?
+    @Relationship(inverse: \TagGroup.tags) var group: TagGroup?
+    @Relationship(inverse: \Invoice.tags) var invoices: [Invoice]?
     
     init(title: String, group: TagGroup, color: Color = Color.accentColor) {
         self.title = title
@@ -22,7 +22,7 @@ extension Tag {
         
         let tag1 = Tag(title: "no-comment", group: projectGroup)
         let tag2 = Tag(title: "private", group: projectGroup)
-        
+
         modelContext.insert(tag1)
         modelContext.insert(tag2)
     }

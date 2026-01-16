@@ -50,7 +50,7 @@ struct DataContainerViewModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .generateData()
-            .modelContainer(for: [Invoice.self], inMemory: inMemory)
+            .modelContainer(for: [Invoice.self, Tag.self, TagGroup.self], inMemory: inMemory)
     }
 }
 
@@ -77,5 +77,7 @@ public enum DataStoreConfig {
     
     static let schema = SwiftData.Schema([
         Invoice.self,
+        Tag.self,
+        TagGroup.self,
     ])
 }

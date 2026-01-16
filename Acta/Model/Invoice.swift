@@ -33,6 +33,21 @@ final class Invoice {
 }
 
 extension Invoice {
+    func getPreTaxAmountString() -> String {
+        guard let preTaxAmount else { return "N/A" }
+        guard let currency else { return "N/A" }
+        
+        return preTaxAmount.formatted() + " " + currency
+    }
+    
+    func getTags(for group: TagGroup) -> [Tag] {
+        guard let tags else { return [] }
+        let resultTags = tags.filter({ $0.group == group })
+        return resultTags
+    }
+}
+
+extension Invoice {
     enum Direction: String, Identifiable, Codable {
         case incoming = "incoming"
         case outgoing = "outgoing"
@@ -47,10 +62,10 @@ extension Invoice {
         let allTags = try? modelContext.fetch(FetchDescriptor<Tag>())
         guard let nocommentTag = allTags?.first(where: { $0.title == "no-comment" }) else { return }
         guard let privateTag = allTags?.first(where: { $0.title == "private" }) else { return }
-        
+                
         let invoice1 = Invoice(tags: [nocommentTag], vendorName: "Wilhelm Gymnasium")
         let invoice2 = Invoice(tags: [privateTag], vendorName: "Apple")
-        
+                
         modelContext.insert(invoice1)
         modelContext.insert(invoice2)
     }
