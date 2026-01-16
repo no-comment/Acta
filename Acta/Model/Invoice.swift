@@ -34,10 +34,30 @@ final class Invoice {
 
 extension Invoice {
     func getPreTaxAmountString() -> String {
-        guard let preTaxAmount else { return "N/A" }
+        guard var amount = preTaxAmount else { return "N/A" }
         guard let currency else { return "N/A" }
         
-        return preTaxAmount.formatted() + " " + currency
+        if self.direction == .outgoing {
+            amount.negate()
+        }
+        
+        return amount.formatted() + " " + currency
+    }
+    
+    func getPostTaxAmountString() -> String {
+        guard var amount = totalAmount else { return "N/A" }
+        guard let currency else { return "N/A" }
+        
+        if self.direction == .incoming {
+            amount.negate()
+        }
+        
+        return amount.formatted() + " " + currency
+    }
+    
+    func getTaxPercentage() -> String {
+        guard let taxPercentage else { return "N/A" }
+        return taxPercentage.formatted(.percent)
     }
     
     func getTags(for group: TagGroup) -> [Tag] {
@@ -63,10 +83,12 @@ extension Invoice {
         guard let nocommentTag = allTags?.first(where: { $0.title == "no-comment" }) else { return }
         guard let privateTag = allTags?.first(where: { $0.title == "private" }) else { return }
                 
-        let invoice1 = Invoice(tags: [nocommentTag], vendorName: "Wilhelm Gymnasium")
+        let invoice1 = Invoice(tags: [nocommentTag], vendorName: "Wilhelm Gymnasium", invoiceNo: "PW25-01", taxPercentage: 0.19)
         let invoice2 = Invoice(tags: [privateTag], vendorName: "Apple")
+        let invoice3 = Invoice(tags: [nocommentTag], isManuallyChecked: true, vendorName: "Google", date: Date.now, totalAmount: 12, preTaxAmount: 10, taxPercentage: 0.22, currency: "$", direction: .incoming)
                 
         modelContext.insert(invoice1)
         modelContext.insert(invoice2)
+        modelContext.insert(invoice3)
     }
 }

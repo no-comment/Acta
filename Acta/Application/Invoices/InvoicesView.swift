@@ -5,6 +5,7 @@ struct InvoicesView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var invoices: [Invoice]
     @Query private var tagGroups: [TagGroup]
+    @Query private var tags: [Tag]
     
     @SceneStorage("BugReportTableConfig") private var columnCustomization: TableColumnCustomization<Invoice>
     
@@ -30,10 +31,23 @@ struct InvoicesView: View {
             }
             .customizationID("invoiceDate")
             
-            TableColumn("Amount") { invoice in
+            TableColumn("Invoice #", value: \.invoiceNo)
+                .customizationID("invoiceNumber")
+            
+            TableColumn("Pre Tax Amount") { invoice in
                 Text(invoice.getPreTaxAmountString())
             }
             .customizationID("preTaxAmount")
+            
+            TableColumn("Tax") { invoice in
+                Text(invoice.getTaxPercentage())
+            }
+            .customizationID("taxPercentage")
+            
+            TableColumn("Total Amount") { invoice in
+                Text(invoice.getPostTaxAmountString())
+            }
+            .customizationID("totalAmount")
             
             TableColumnForEach(tagGroups) { group in
                 TableColumn(group.title) { invoice in
@@ -43,6 +57,7 @@ struct InvoicesView: View {
                         }
                     }
                 }
+                .customizationID("groupColumn-\(group.title)")
             }
         }
         .frame(minWidth: 300, minHeight: 300)
@@ -61,6 +76,10 @@ struct InvoicesView: View {
                 for group in tagGroups {
                     modelContext.delete(group)
                 }
+                
+                for tag in tags {
+                    modelContext.delete(tag)
+                }
             })
         }
         
@@ -69,6 +88,12 @@ struct InvoicesView: View {
                 TagGroup.generateMockData(modelContext: modelContext)
                 Tag.generateMockData(modelContext: modelContext)
                 Invoice.generateMockData(modelContext: modelContext)
+            })
+        }
+        
+        ToolbarItem {
+            Button("Count", systemImage: "questionmark", role: .none, action: {
+                print("Invoices: \(invoices.count), TagGroups: \(tagGroups.count), Tags: \(tags.count)")
             })
         }
     }
