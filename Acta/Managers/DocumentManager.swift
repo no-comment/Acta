@@ -29,6 +29,9 @@ final class DocumentManager: CloudDriveObserver {
     var bankStatements: [DocumentFile] = []
     var loadingState: LoadingState = .idle
     
+    /// When true, change notifications are suppressed (used during rename operations)
+    private var suppressChangeNotifications = false
+    
     /// Posted when documents change (added, updated, or removed)
     static let documentsDidChangeNotification = Notification.Name("DocumentManagerDocumentsDidChange")
     
@@ -46,6 +49,12 @@ final class DocumentManager: CloudDriveObserver {
     
     nonisolated func cloudDriveDidChange(_ drive: CloudDrive, rootRelativePaths: [RootRelativePath]) {
         Task { @MainActor in
+            // Skip if notifications are suppressed (e.g., during rename operations)
+            guard !suppressChangeNotifications else {
+                logger.info("📥 iCloud change detected but notifications suppressed, skipping...")
+                return
+            }
+            
             // Check if any of the changed paths are in our watched folders
             let invoiceFolderPath = DocumentType.invoice.folderPath
             let bankStatementFolderPath = DocumentType.bankStatement.folderPath
@@ -162,6 +171,84 @@ final class DocumentManager: CloudDriveObserver {
     func getFolderURL(for type: DocumentType) -> URL {
         return drive.rootDirectory
             .appendingPathComponent(type.folderPath)
+    }
+    
+    /// Renames a document file, handling duplicates by appending a number
+    /// - Parameters:
+    ///   - oldFilename: The current filename
+    ///   - newBaseFilename: The desired new filename (without handling duplicates)
+    ///   - type: The document type
+    /// - Returns: The actual new filename (may have number appended if duplicate existed)
+    func renameDocument(from oldFilename: String, to newBaseFilename: String, type: DocumentType) async throws -> String {
+        // Suppress change notifications during rename
+        suppressChangeNotifications = true
+        defer { suppressChangeNotifications = false }
+        
+        let folderURL = getFolderURL(for: type)
+        let oldURL = folderURL.appendingPathComponent(oldFilename)
+        
+        // Get the file extension from the old filename
+        let fileExtension = (oldFilename as NSString).pathExtension
+        
+        // Generate unique filename
+        let newFilename = generateUniqueFilename(baseName: newBaseFilename, extension: fileExtension, in: folderURL)
+        let newURL = folderURL.appendingPathComponent(newFilename)
+        
+        // Perform the rename using FileManager
+        try FileManager.default.moveItem(at: oldURL, to: newURL)
+        
+        logger.info("📝 Renamed document: \(oldFilename) -> \(newFilename)")
+        
+        // Refresh the document list
+        try await refreshDocuments(type: type)
+        
+        return newFilename
+    }
+    
+    /// Generates a unique filename by appending a number if the file already exists
+    private func generateUniqueFilename(baseName: String, extension fileExtension: String, in folderURL: URL) -> String {
+        let ext = fileExtension.isEmpty ? "" : ".\(fileExtension)"
+        var candidate = "\(baseName)\(ext)"
+        var counter = 1
+        
+        while FileManager.default.fileExists(atPath: folderURL.appendingPathComponent(candidate).path) {
+            counter += 1
+            candidate = "\(baseName)_\(counter)\(ext)"
+        }
+        
+        return candidate
+    }
+    
+    /// Generates a safe filename from vendor name and date
+    /// - Parameters:
+    ///   - vendorName: The vendor name (first line used, whitespace replaced with underscores)
+    ///   - date: The invoice date
+    /// - Returns: A sanitized filename without extension
+    static func generateInvoiceFilename(vendorName: String?, date: Date?) -> String {
+        // Get first line of vendor name, default to "Unknown"
+        let vendor = vendorName?
+            .components(separatedBy: .newlines)
+            .first?
+            .trimmingCharacters(in: .whitespaces)
+            ?? "Unknown"
+        
+        // Replace whitespace with underscores and remove unsafe characters
+        let safeVendor = vendor
+            .replacingOccurrences(of: " ", with: "_")
+            .components(separatedBy: CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_-")).inverted)
+            .joined()
+        
+        // Format date or use "undated"
+        let dateString: String
+        if let date {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            dateString = formatter.string(from: date)
+        } else {
+            dateString = "undated"
+        }
+        
+        return "\(safeVendor)_\(dateString)"
     }
     
     /// Checks if a file with the same content already exists in the specified folder

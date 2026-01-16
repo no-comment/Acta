@@ -63,7 +63,12 @@ struct InvoicesView: View {
             
             TableColumn("Invoice #", value: \.invoiceNo)
                 .customizationID("invoiceNumber")
-            
+
+            TableColumn("Filename") { invoice in
+                Text(invoice.path ?? "N/A")
+            }
+            .customizationID("filename")
+
             TableColumn("Pre Tax") { invoice in
                 Text(invoice.getPreTaxAmountString())
             }
@@ -173,6 +178,22 @@ struct InvoicesView: View {
                     invoice.taxPercentage = result.taxPercentage
                     invoice.currency = result.currency
                     invoice.direction = result.direction
+                    
+                    // Rename the file to vendor+date format
+                    let newBaseName = DocumentManager.generateInvoiceFilename(
+                        vendorName: result.vendorName,
+                        date: result.date
+                    )
+                    
+                    let newFilename = try await documentManager.renameDocument(
+                        from: path,
+                        to: newBaseName,
+                        type: .invoice
+                    )
+                    
+                    // Update the invoice path to the new filename
+                    invoice.path = newFilename
+                    
                 } catch {
                     print("OCR failed for \(path): \(error.localizedDescription)")
                 }
