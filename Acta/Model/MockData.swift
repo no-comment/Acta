@@ -71,7 +71,7 @@ struct GenerateDataViewModifier: ViewModifier {
 }
 
 public enum DataStoreConfig {
-    static let container = try! ModelContainer(for: DataStoreConfig.schema, configurations: ModelConfiguration(groupContainer: .identifier("group.xyz.no-comment.Acta")))
+    static let container = try! ModelContainer(for: schema, configurations: .init(schema: schema, isStoredInMemoryOnly: false))
     
     static let schema = SwiftData.Schema([
         Invoice.self,
