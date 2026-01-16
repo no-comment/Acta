@@ -65,6 +65,8 @@ struct GenerateDataViewModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content.onAppear {
+            TagGroup.generateMockData(modelContext: modelContext)
+            Tag.generateMockData(modelContext: modelContext)
             Invoice.generateMockData(modelContext: modelContext)
         }
     }
