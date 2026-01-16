@@ -6,7 +6,8 @@ struct InvoiceInspectorView: View {
     @Binding private var id: Invoice.ID?
     
     @State private var status: Invoice.Status = .new
-
+    @State private var filePath: String = ""
+    
     @State private var vendorName: String = ""
     @State private var date: Date = Date.distantPast
     @State private var invoiceNo: String = ""
@@ -28,15 +29,35 @@ struct InvoiceInspectorView: View {
         }
         .onChange(of: self.id, onIDChange)
         .safeAreaInset(edge: .bottom) {
-            Button("Save", action: self.saveChanges)
-                .buttonStyle(.borderedProminent)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding()
+            VStack(spacing: 0) {
+                Divider()
+                HStack(spacing: 0) {
+                    Button("Close", action: { self.id = nil })
+                        .buttonStyle(.bordered)
+                    Spacer(minLength: 0)
+                    Button("Save", action: self.saveChanges)
+                        .buttonStyle(.borderedProminent)
+                }
+                .padding([.horizontal, .bottom])
+                .padding(.top, 10)
+            }
+            .background(.regularMaterial)
         }
     }
     
     private var form: some View {
         VStack(spacing: 10) {
+            Labeled("File Path") {
+                HStack(spacing: 2) {
+                    Text(filePath)
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
             Labeled("Vendor Name") {
                 TextField("Vendor Name", text: $vendorName)
             }
@@ -77,8 +98,10 @@ struct InvoiceInspectorView: View {
                         .tag(Invoice.Direction.outgoing)
                 }
                 .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-
+            
             Labeled("Status") {
                 Picker("Invoice Status", selection: $status) {
                     ForEach(Invoice.Status.allCases) { status in
@@ -90,12 +113,25 @@ struct InvoiceInspectorView: View {
                     }
                 }
                 .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
     
     private func saveChanges() {
-        
+        guard let selectedID = self.id, let invoice = invoices.first(where: { $0.id == selectedID }) else {
+            assertionFailure("No invoice found for ID when attempting save")
+            return
+        }
+        invoice.vendorName = vendorName
+        invoice.date = date
+        invoice.invoiceNo = invoiceNo
+        invoice.totalAmount = totalAmount
+        invoice.preTaxAmount = preTaxAmount
+        invoice.taxPercentage = taxPercentage
+        invoice.currency = currency
+        invoice.direction = direction
+        invoice.status = status
     }
     
     private func onIDChange(oldValue: Invoice.ID?, newValue: Invoice.ID?) {
@@ -109,6 +145,7 @@ struct InvoiceInspectorView: View {
             self.taxPercentage = invoice.taxPercentage ?? 0
             self.currency = invoice.currency ?? "N/A"
             self.direction = invoice.direction ?? .incoming
+            self.filePath = invoice.path ?? "N/A"
         }
     }
 }
