@@ -18,9 +18,10 @@ struct InvoicesView: View {
     
     var body: some View {
         Table(sortedInvoices, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
-            TableColumn("Checked") { invoice in
-                Text(invoice.isManuallyChecked ? "✅" : "❌")
+            TableColumn("") { invoice in
+                Image(systemName: invoice.isManuallyChecked ? "checkmark.circle.fill" : "circle")
             }
+            .width(16)
             .customizationID("isManuallyChecked")
             
             TableColumn("Vendor", value: \.vendorName)
@@ -34,17 +35,19 @@ struct InvoicesView: View {
             TableColumn("Invoice #", value: \.invoiceNo)
                 .customizationID("invoiceNumber")
             
-            TableColumn("Pre Tax Amount") { invoice in
+            TableColumn("Pre Tax") { invoice in
                 Text(invoice.getPreTaxAmountString())
             }
             .customizationID("preTaxAmount")
+            .defaultVisibility(.hidden)
             
             TableColumn("Tax") { invoice in
                 Text(invoice.getTaxPercentage())
             }
             .customizationID("taxPercentage")
+            .defaultVisibility(.hidden)
             
-            TableColumn("Total Amount") { invoice in
+            TableColumn("Total") { invoice in
                 Text(invoice.getPostTaxAmountString())
             }
             .customizationID("totalAmount")
