@@ -52,6 +52,19 @@ struct ActaApp: App {
                 .disabled(documentManager == nil)
             }
         }
+        WindowGroup("Invoice Details", for: Invoice.ID.self) { $invoiceID in
+            if let invoiceID {
+                InvoiceDetailView(invoiceID: invoiceID)
+                    .environment(documentManager)
+            }
+        }
+        .modelContainer(DataStoreConfig.container)
+
+        Window("Review Invoices", id: "invoice-review") {
+            InvoiceReviewView()
+                .environment(documentManager)
+        }
+        .modelContainer(DataStoreConfig.container)
     }
     
     private func initializeiCloud() async {
@@ -76,7 +89,7 @@ struct ActaApp: App {
     }
     
     enum MainView: String, Identifiable, CaseIterable {
-        case invoices = "invoices"
+        case invoices
         case bankStatements = "bank-statements"
         
         var id: String { self.rawValue }

@@ -3,6 +3,7 @@ import SwiftData
 
 struct InvoicesView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openWindow) private var openWindow
     @Environment(DocumentManager.self) private var documentManager: DocumentManager?
     @Query private var invoices: [Invoice]
     @Query private var tagGroups: [TagGroup]
@@ -32,6 +33,10 @@ struct InvoicesView: View {
     
     private var newInvoices: [Invoice] {
         invoices.filter { $0.status == .new }
+    }
+
+    private var unreviewedInvoices: [Invoice] {
+        invoices.filter { $0.status != .verified }
     }
     
     var body: some View {
@@ -98,9 +103,10 @@ struct InvoicesView: View {
             }
         }
         .contextMenu(forSelectionType: Invoice.ID.self) { items in
-            
+
         } primaryAction: { items in
-            print("Double click")
+            guard let invoiceID = items.first else { return }
+            openWindow(value: invoiceID)
         }
     }
     
@@ -146,6 +152,13 @@ struct InvoicesView: View {
                 NotificationCenter.default.post(name: .importInvoice, object: nil)
             }
             .disabled(documentManager == nil)
+        }
+
+        ToolbarItem {
+            Button("Review", systemImage: "checkmark.circle") {
+                openWindow(id: "invoice-review")
+            }
+            .disabled(unreviewedInvoices.isEmpty)
         }
     }
     

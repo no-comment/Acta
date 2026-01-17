@@ -164,6 +164,16 @@ final class DocumentManager: CloudDriveObserver {
             .appendingPathComponent(type.folderPath)
             .appendingPathComponent(document.filename)
     }
+
+    /// Gets the URL for an invoice by matching its path to the document files
+    /// - Parameter invoice: The invoice to get the URL for
+    /// - Returns: The local URL to the file, or nil if not found
+    func getURL(for invoice: Invoice) -> URL? {
+        guard let path = invoice.path,
+              let documentFile = invoices.first(where: { $0.filename == path })
+        else { return nil }
+        return getURL(for: documentFile, type: .invoice)
+    }
     
     /// Gets the URL for a document folder
     /// - Parameter type: The type of document

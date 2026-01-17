@@ -1,6 +1,17 @@
 import SwiftData
 import SwiftUI
 
+// MARK: - Shared Model Container
+
+enum DataStoreConfig {
+    @MainActor
+    static let container: ModelContainer = {
+        try! ModelContainer(for: Invoice.self, Tag.self, TagGroup.self)
+    }()
+}
+
+// MARK: - Preview Helpers
+
 public struct ModelPreview<Model: PersistentModel, Content: View>: View {
     var content: (Model) -> Content
     
@@ -70,14 +81,4 @@ struct GenerateDataViewModifier: ViewModifier {
             Invoice.generateMockData(modelContext: modelContext)
         }
     }
-}
-
-public enum DataStoreConfig {
-    static let container = try! ModelContainer(for: schema, configurations: .init(schema: schema, isStoredInMemoryOnly: false))
-    
-    static let schema = SwiftData.Schema([
-        Invoice.self,
-        Tag.self,
-        TagGroup.self,
-    ])
 }
