@@ -7,6 +7,10 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(DocumentManager.self) private var documentManager: DocumentManager?
     @State private var isImportingInvoice = false
+
+    private var didSavePublisher: NotificationCenter.Publisher {
+        NotificationCenter.default.publisher(for: ModelContext.didSave, object: modelContext)
+    }
     
     var body: some View {
         content
@@ -21,6 +25,9 @@ struct ContentView: View {
                     }
                     .font(.headline)
                 }
+            }
+            .onReceive(didSavePublisher) { notification in
+                logModelSave(notification)
             }
     }
     
@@ -63,6 +70,18 @@ struct ContentView: View {
                 modelContext.insert(invoice)
             }
         }
+    }
+
+    private func logModelSave(_ notification: Notification) {
+        let inserted = notification.userInfo?[ModelContext.NotificationKey.insertedModels] as? [PersistentModel] ?? []
+        let updated = notification.userInfo?[ModelContext.NotificationKey.updatedModels] as? [PersistentModel] ?? []
+        let deleted = notification.userInfo?[ModelContext.NotificationKey.deletedModels] as? [PersistentModel] ?? []
+
+        let insertedInvoices = inserted.compactMap { $0 as? Invoice }.compactMap(\.path)
+        let updatedInvoices = updated.compactMap { $0 as? Invoice }.compactMap(\.path)
+        let deletedInvoices = deleted.compactMap { $0 as? Invoice }.compactMap(\.path)
+
+        print("SwiftData didSave: inserted=\(insertedInvoices) updated=\(updatedInvoices) deleted=\(deletedInvoices)")
     }
 }
 
