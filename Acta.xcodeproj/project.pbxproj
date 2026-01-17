@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		45B636652F1BBB81000CA11F /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 45B636642F1BBB81000CA11F /* KeychainAccess */; };
 		45CB4A2D2F1A92D2004CD2DF /* SwiftCloudDrive in Frameworks */ = {isa = PBXBuildFile; productRef = 45CB4A2C2F1A92D2004CD2DF /* SwiftCloudDrive */; };
 /* End PBXBuildFile section */
 
@@ -69,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45B636652F1BBB81000CA11F /* KeychainAccess in Frameworks */,
 				45CB4A2D2F1A92D2004CD2DF /* SwiftCloudDrive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -131,6 +133,7 @@
 			name = Acta;
 			packageProductDependencies = (
 				45CB4A2C2F1A92D2004CD2DF /* SwiftCloudDrive */,
+				45B636642F1BBB81000CA11F /* KeychainAccess */,
 			);
 			productName = Acta;
 			productReference = CB84AFD42F1A707D001CD6E1 /* Acta.app */;
@@ -216,6 +219,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				45CB4A2B2F1A92D2004CD2DF /* XCRemoteSwiftPackageReference "SwiftCloudDrive" */,
+				45B636632F1BBB81000CA11F /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CB84AFD52F1A707D001CD6E1 /* Products */;
@@ -423,7 +427,17 @@
 				DEVELOPMENT_TEAM = WR2SRBM777;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Acta/Info.plist;
@@ -457,7 +471,17 @@
 				DEVELOPMENT_TEAM = WR2SRBM777;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Acta/Info.plist;
@@ -601,6 +625,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		45B636632F1BBB81000CA11F /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		45CB4A2B2F1A92D2004CD2DF /* XCRemoteSwiftPackageReference "SwiftCloudDrive" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/drewmccormack/SwiftCloudDrive";
@@ -612,6 +644,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		45B636642F1BBB81000CA11F /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45B636632F1BBB81000CA11F /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
+		};
 		45CB4A2C2F1A92D2004CD2DF /* SwiftCloudDrive */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 45CB4A2B2F1A92D2004CD2DF /* XCRemoteSwiftPackageReference "SwiftCloudDrive" */;

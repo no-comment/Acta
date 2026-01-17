@@ -65,6 +65,10 @@ struct ActaApp: App {
                 .environment(documentManager)
         }
         .modelContainer(DataStoreConfig.container)
+
+        Settings {
+            SettingsView()
+        }
     }
     
     private func initializeiCloud() async {
