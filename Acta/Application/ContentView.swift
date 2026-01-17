@@ -7,10 +7,6 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(DocumentManager.self) private var documentManager: DocumentManager?
     @State private var isImportingInvoice = false
-
-    private var didSavePublisher: NotificationCenter.Publisher {
-        NotificationCenter.default.publisher(for: ModelContext.didSave, object: modelContext)
-    }
     
     var body: some View {
         content
@@ -25,9 +21,6 @@ struct ContentView: View {
                     }
                     .font(.headline)
                 }
-            }
-            .onReceive(didSavePublisher) { notification in
-                logModelSave(notification)
             }
     }
     
@@ -66,21 +59,12 @@ struct ContentView: View {
         // Create records for documents that don't have a corresponding invoice
         for document in documentManager.invoices {
             if !existingPaths.contains(document.filename) {
-                print("syncInvoicesWithDocuments: inserting invoice for \(document.filename)")
                 let invoice = Invoice(path: document.filename, tags: [], status: .new)
                 modelContext.insert(invoice)
             }
         }
     }
 
-    private func logModelSave(_ notification: Notification) {
-        if let userInfo = notification.userInfo {
-            print("SwiftData didSave userInfo keys: \(Array(userInfo.keys))")
-            print("SwiftData didSave userInfo: \(userInfo)")
-        } else {
-            print("SwiftData didSave with empty userInfo")
-        }
-    }
 }
 
 extension Notification.Name {
