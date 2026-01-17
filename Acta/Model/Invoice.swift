@@ -33,11 +33,23 @@ final class Invoice {
 }
 
 extension Invoice {
+    func applyOCRResult(_ result: OCRResult) {
+        status = .processed
+        vendorName = result.vendorName
+        date = result.date
+        invoiceNo = result.invoiceNo
+        totalAmount = result.totalAmount
+        preTaxAmount = result.preTaxAmount
+        taxPercentage = result.taxPercentage
+        currency = result.currency
+        direction = result.direction
+    }
+
     func getPreTaxAmountString() -> String {
         guard var amount = preTaxAmount else { return "N/A" }
         guard let currency else { return "N/A" }
         
-        if self.direction == .incoming {
+        if self.direction == .outgoing {
             amount.negate()
         }
         
@@ -48,7 +60,7 @@ extension Invoice {
         guard var amount = totalAmount else { return "N/A" }
         guard let currency else { return "N/A" }
         
-        if self.direction == .incoming {
+        if self.direction == .outgoing {
             amount.negate()
         }
         

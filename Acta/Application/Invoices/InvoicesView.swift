@@ -12,6 +12,10 @@ struct InvoicesView: View {
     @SceneStorage("BugReportTableConfig") private var columnCustomization: TableColumnCustomization<Invoice>
     
     @State private var isProcessingOCR = false
+    @State private var ocrManager = OCRManager.shared
+    @State private var ocrProgressTotal = 0
+    @State private var ocrProgressCompleted = 0
+    @State private var ocrTask: Task<Void, Never>?
     
     @State private var sortOrder = [KeyPathComparator(\Invoice.status), KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
@@ -43,6 +47,7 @@ struct InvoicesView: View {
     private var unreviewedInvoices: [Invoice] {
         invoices.filter { $0.status != .verified }
     }
+
     
     var body: some View {
         table
@@ -64,7 +69,7 @@ struct InvoicesView: View {
             }
             .width(16)
             .customizationID("status")
-            
+
             TableColumn("Vendor", value: \.vendorName)
                 .customizationID("vendorName")
             
@@ -121,26 +126,60 @@ struct InvoicesView: View {
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem {
-            Button("OCR All New", systemImage: "doc.text.viewfinder", action: processAllNewInvoices)
-                .disabled(newInvoices.isEmpty || isProcessingOCR || documentManager == nil)
-                .help("Scan Unscanned Invoices")
-        }
-        
-        ToolbarItem {
+        ToolbarItemGroup(placement: .primaryAction) {
             Button("Import", systemImage: "square.and.arrow.down") {
                 NotificationCenter.default.post(name: .importInvoice, object: nil)
             }
             .disabled(documentManager == nil)
-            .help("Import Invoices")
-        }
 
-        ToolbarItem {
+            if isProcessingOCR {
+                HStack(spacing: 8) {
+                    ProgressView(value: Double(ocrProgressCompleted), total: Double(max(ocrProgressTotal, 1)))
+                        .progressViewStyle(.linear)
+                        .frame(width: 160)
+                        .help("OCR \(ocrProgressCompleted) of \(ocrProgressTotal)")
+
+                    Button("Cancel", systemImage: "xmark.circle") {
+                        ocrTask?.cancel()
+                        OCRManager.shared.cancelAllProcessing()
+                    }
+                }
+            } else {
+                Button("OCR All New", systemImage: "doc.text.viewfinder", action: processAllNewInvoices)
+                    .disabled(newInvoices.isEmpty || documentManager == nil || !APIKeyStore.hasOpenRouterKey())
+            }
+
             Button("Review", systemImage: "checkmark.circle") {
                 openWindow(id: "invoice-review")
             }
             .disabled(unreviewedInvoices.isEmpty)
             .help("Open Invoice Review")
+        }
+
+        ToolbarItemGroup(placement: .principal) {
+            Button("Show Counts", systemImage: "number") {
+                print("Invoices: \(invoices.count), TagGroups: \(tagGroups.count), Tags: \(tags.count)")
+            }
+
+            Button("Generate Sample Data", systemImage: "plus") {
+                TagGroup.generateMockData(modelContext: modelContext)
+                Tag.generateMockData(modelContext: modelContext)
+                Invoice.generateMockData(modelContext: modelContext)
+            }
+
+            Button("Delete All", systemImage: "trash", role: .destructive) {
+                for invoice in invoices {
+                    modelContext.delete(invoice)
+                }
+
+                for group in tagGroups {
+                    modelContext.delete(group)
+                }
+
+                for tag in tags {
+                    modelContext.delete(tag)
+                }
+            }
         }
     }
     
@@ -148,11 +187,16 @@ struct InvoicesView: View {
         guard let documentManager else { return }
         
         isProcessingOCR = true
+        ocrProgressTotal = newInvoices.count
+        ocrProgressCompleted = 0
         
-        Task {
-            let ocrManager = OCRManager()
-            
+        ocrTask?.cancel()
+        ocrTask = Task {
             for invoice in newInvoices {
+                if Task.isCancelled {
+                    break
+                }
+
                 guard let path = invoice.path else { continue }
                 
                 // Find the DocumentFile matching this invoice's path
@@ -161,40 +205,22 @@ struct InvoicesView: View {
                 }
                 
                 do {
-                    let result = try await ocrManager.processInvoice(from: documentFile)
-                    
-                    // Update the existing invoice with OCR results
-                    invoice.status = .processed
-                    invoice.vendorName = result.vendorName
-                    invoice.date = result.date
-                    invoice.invoiceNo = result.invoiceNo
-                    invoice.totalAmount = result.totalAmount
-                    invoice.preTaxAmount = result.preTaxAmount
-                    invoice.taxPercentage = result.taxPercentage
-                    invoice.currency = result.currency
-                    invoice.direction = result.direction
-                    
-                    // Rename the file to vendor+date format
-                    let newBaseName = DocumentManager.generateInvoiceFilename(
-                        vendorName: result.vendorName,
-                        date: result.date
+                    try await OCRManager.shared.processInvoice(
+                        document: documentFile,
+                        invoice: invoice,
+                        documentManager: documentManager
                     )
-                    
-                    let newFilename = try await documentManager.renameDocument(
-                        from: path,
-                        to: newBaseName,
-                        type: .invoice
-                    )
-                    
-                    // Update the invoice path to the new filename
-                    invoice.path = newFilename
-                    
+                } catch is CancellationError {
+                    break
                 } catch {
                     print("OCR failed for \(path): \(error.localizedDescription)")
                 }
+
+                ocrProgressCompleted += 1
             }
             
             isProcessingOCR = false
+            ocrTask = nil
         }
     }
 }

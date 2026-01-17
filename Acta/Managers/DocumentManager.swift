@@ -154,25 +154,14 @@ final class DocumentManager: CloudDriveObserver {
         try await refreshDocuments(type: type)
     }
     
-    /// Gets the URL for a document file
-    /// - Parameters:
-    ///   - document: The document file
-    ///   - type: The type of document
-    /// - Returns: The local URL to the file
-    func getURL(for document: DocumentFile, type: DocumentType) -> URL {
-        return drive.rootDirectory
-            .appendingPathComponent(type.folderPath)
-            .appendingPathComponent(document.filename)
-    }
-
     /// Gets the URL for an invoice by matching its path to the document files
     /// - Parameter invoice: The invoice to get the URL for
     /// - Returns: The local URL to the file, or nil if not found
     func getURL(for invoice: Invoice) -> URL? {
-        guard let path = invoice.path,
-              let documentFile = invoices.first(where: { $0.filename == path })
-        else { return nil }
-        return getURL(for: documentFile, type: .invoice)
+        guard let path = invoice.path else { return nil }
+        return drive.rootDirectory
+            .appendingPathComponent(DocumentType.invoice.folderPath)
+            .appendingPathComponent(path)
     }
     
     /// Gets the URL for a document folder
@@ -298,8 +287,7 @@ final class DocumentManager: CloudDriveObserver {
         
         // Compare bytes with same-size files
         for document in sameSizeDocuments {
-            let documentURL = getURL(for: document, type: type)
-            guard let documentData = try? Data(contentsOf: documentURL) else { continue }
+            guard let documentData = try? Data(contentsOf: document.url) else { continue }
             
             if sourceData == documentData {
                 logger.info("🔍 Found duplicate: \(document.filename)")
@@ -420,6 +408,7 @@ final class DocumentManager: CloudDriveObserver {
             }
             
             return DocumentFile(
+                url: url,
                 filename: url.lastPathComponent,
                 modificationDate: modificationDate ?? Date(),
                 fileSize: fileSize ?? 0,
@@ -492,6 +481,7 @@ enum DocumentType {
 
 struct DocumentFile: Identifiable {
     let id = UUID()
+    let url: URL
     let filename: String
     let modificationDate: Date
     let fileSize: Int64
