@@ -485,6 +485,7 @@ struct BankStatementCSVImportView: View {
             existingKeys.insert(key)
         }
 
+        BankStatementMatcher.autoLink(modelContext: modelContext)
         dismiss()
     }
 

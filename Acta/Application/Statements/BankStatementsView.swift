@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 struct BankStatementsView: View {
@@ -102,7 +102,7 @@ struct BankStatementsView: View {
                     .monospacedDigit()
             }
             .alignment(.trailing)
-                .customizationID("amount")
+            .customizationID("amount")
             TableColumn("Reference", value: \.reference)
                 .customizationID("reference")
             TableColumn("Notes", value: \.notes)
@@ -124,6 +124,12 @@ struct BankStatementsView: View {
     
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            Button("Auto Link", systemImage: "link") {
+                BankStatementMatcher.autoLink(modelContext: modelContext)
+            }
+        }
+
         ToolbarItemGroup(placement: .principal) {
             Button("Generate Sample Data", systemImage: "plus") {
                 BankStatement.generateMockData(modelContext: modelContext)

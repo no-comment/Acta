@@ -164,7 +164,7 @@ struct InvoiceFormView: View {
                         Image(systemName: "doc.text.viewfinder")
                     }
                 }
-             }
+            }
             .disabled(isOCRProcessing || currentDocumentFile == nil || !APIKeyStore.hasOpenRouterKey())
             
             Button("Delete Invoice", systemImage: "trash", role: .destructive) {
@@ -186,7 +186,7 @@ struct InvoiceFormView: View {
                     invoice: invoice,
                     documentManager: documentManager
                 )
-                _ = await MainActor.run {
+                await MainActor.run {
                     try? modelContext.save()
                 }
             } catch is CancellationError {
