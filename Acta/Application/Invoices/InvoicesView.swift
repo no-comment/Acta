@@ -145,7 +145,7 @@ struct InvoicesView: View {
                 .tint(.red)
         } primaryAction: { items in
             guard let invoiceID = items.first else { return }
-            openWindow(value: invoiceID)
+            openWindow(value: ActaApp.WindowType.invoiceDetail(id: invoiceID))
         }
     }
     

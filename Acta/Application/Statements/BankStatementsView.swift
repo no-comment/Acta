@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct BankStatementsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(DocumentManager.self) private var documentManager: DocumentManager?
+    @Environment(\.openWindow) private var openWindow
     @Query private var statements: [BankStatement]
     
     @SceneStorage("BankStatementColumnCustomization") private var columnCustomization: TableColumnCustomization<BankStatement>
@@ -108,6 +109,13 @@ struct BankStatementsView: View {
             .defaultVisibility(.hidden)
             .customizationID("linkedFileName")
         }
+        .contextMenu(forSelectionType: BankStatement.ID.self) { items in
+            Button("Delete Statement", systemImage: "trash", role: .destructive, action: { deleteStatements(items) })
+                .tint(.red)
+        } primaryAction: { items in
+            guard let statementID = items.first else { return }
+            openWindow(value: ActaApp.WindowType.statementMatching(id: statementID))
+        }
     }
     
     @ToolbarContentBuilder
@@ -165,6 +173,13 @@ struct BankStatementsView: View {
         errorMessage = "Only CSV files can be imported"
         showError = true
         return false
+    }
+    
+    private func deleteStatements(_ statementIDs: Set<BankStatement.ID>) {
+        for statementID in statementIDs {
+            guard let statement = self.statements.first(where: { $0.id == statementID }) else { continue }
+            modelContext.delete(statement)
+        }
     }
 }
 
