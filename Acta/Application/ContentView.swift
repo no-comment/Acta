@@ -66,6 +66,7 @@ struct ContentView: View {
         // Create records for documents that don't have a corresponding invoice
         for document in documentManager.invoices {
             if !existingPaths.contains(document.filename) {
+                print("syncInvoicesWithDocuments: inserting invoice for \(document.filename)")
                 let invoice = Invoice(path: document.filename, tags: [], status: .new)
                 modelContext.insert(invoice)
             }
@@ -73,15 +74,12 @@ struct ContentView: View {
     }
 
     private func logModelSave(_ notification: Notification) {
-        let inserted = notification.userInfo?[ModelContext.NotificationKey.insertedModels] as? [PersistentModel] ?? []
-        let updated = notification.userInfo?[ModelContext.NotificationKey.updatedModels] as? [PersistentModel] ?? []
-        let deleted = notification.userInfo?[ModelContext.NotificationKey.deletedModels] as? [PersistentModel] ?? []
-
-        let insertedInvoices = inserted.compactMap { $0 as? Invoice }.compactMap(\.path)
-        let updatedInvoices = updated.compactMap { $0 as? Invoice }.compactMap(\.path)
-        let deletedInvoices = deleted.compactMap { $0 as? Invoice }.compactMap(\.path)
-
-        print("SwiftData didSave: inserted=\(insertedInvoices) updated=\(updatedInvoices) deleted=\(deletedInvoices)")
+        if let userInfo = notification.userInfo {
+            print("SwiftData didSave userInfo keys: \(Array(userInfo.keys))")
+            print("SwiftData didSave userInfo: \(userInfo)")
+        } else {
+            print("SwiftData didSave with empty userInfo")
+        }
     }
 }
 

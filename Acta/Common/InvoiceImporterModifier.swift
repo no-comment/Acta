@@ -119,8 +119,19 @@ struct InvoiceImporterModifier: ViewModifier {
     }
     
     private func createInvoiceRecord(for document: DocumentFile) {
-        let invoice = Invoice(path: document.filename, tags: [], status: .new)
+        let filename = document.filename
+        let descriptor = FetchDescriptor<Invoice>(
+            predicate: #Predicate { $0.path == filename }
+        )
+        let existingInvoices = (try? modelContext.fetch(descriptor)) ?? []
+        guard existingInvoices.isEmpty else {
+            print("invoiceImporter: skipping duplicate invoice for \(filename)")
+            return
+        }
+        print("invoiceImporter: inserting invoice for \(filename)")
+        let invoice = Invoice(path: filename, tags: [], status: .new)
         modelContext.insert(invoice)
+        try? modelContext.save()
     }
 }
 
@@ -286,7 +297,18 @@ struct InvoiceDropImporterModifier: ViewModifier {
     }
     
     private func createInvoiceRecord(for document: DocumentFile) {
-        let invoice = Invoice(path: document.filename, tags: [], status: .new)
+        let filename = document.filename
+        let descriptor = FetchDescriptor<Invoice>(
+            predicate: #Predicate { $0.path == filename }
+        )
+        let existingInvoices = (try? modelContext.fetch(descriptor)) ?? []
+        guard existingInvoices.isEmpty else {
+            print("invoiceDropImporter: skipping duplicate invoice for \(filename)")
+            return
+        }
+        print("invoiceDropImporter: inserting invoice for \(filename)")
+        let invoice = Invoice(path: filename, tags: [], status: .new)
         modelContext.insert(invoice)
+        try? modelContext.save()
     }
 }
