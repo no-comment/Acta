@@ -116,8 +116,9 @@ struct InvoicesView: View {
             }
         }
         .contextMenu(forSelectionType: Invoice.ID.self) { items in
-            Button("Rescan Invoice", systemImage: "text.viewfinder", action: {})
-            Button("Delete Invoice", systemImage: "trash", role: .destructive, action: {})
+            Button("Rescan Invoice", systemImage: "doc.text.viewfinder", action: { batchProcessInvoices(iDs: items) })
+                .disabled(documentManager == nil || isProcessingOCR || !APIKeyStore.hasOpenRouterKey())
+            Button("Delete Invoice", systemImage: "trash", role: .destructive, action: { deleteInvoices(items) })
                 .tint(.red)
         } primaryAction: { items in
             guard let invoiceID = items.first else { return }
@@ -146,7 +147,7 @@ struct InvoicesView: View {
                     }
                 }
             } else {
-                Button("OCR All New", systemImage: "doc.text.viewfinder", action: processAllNewInvoices)
+                Button("OCR All New", systemImage: "doc.text.viewfinder", action: { batchProcessInvoices(self.newInvoices) })
                     .disabled(newInvoices.isEmpty || documentManager == nil || !APIKeyStore.hasOpenRouterKey())
             }
 
@@ -184,16 +185,17 @@ struct InvoicesView: View {
         }
     }
     
-    private func processAllNewInvoices() {
+    // MARK: - Logic
+    private func batchProcessInvoices(_ wantedInvoices: [Invoice]) {
         guard let documentManager else { return }
         
         isProcessingOCR = true
-        ocrProgressTotal = newInvoices.count
+        ocrProgressTotal = wantedInvoices.count
         ocrProgressCompleted = 0
         
         ocrTask?.cancel()
         ocrTask = Task {
-            for invoice in newInvoices {
+            for invoice in wantedInvoices {
                 if Task.isCancelled {
                     break
                 }
@@ -222,6 +224,30 @@ struct InvoicesView: View {
             
             isProcessingOCR = false
             ocrTask = nil
+        }
+    }
+    
+    private func batchProcessInvoices(iDs: Set<Invoice.ID>) {
+        let selectedInvoices: [Invoice] = self.invoices.filter { iDs.contains($0.id) }
+        batchProcessInvoices(selectedInvoices)
+    }
+    
+    private func deleteInvoices(_ invoiceIDs: Set<Invoice.ID>) {
+        guard let documentManager else { return }
+        
+        for invoiceID in invoiceIDs {
+            guard let invoice = self.invoices.first(where: { $0.id == invoiceID }) else { continue }
+            
+            if let path = invoice.path, let documentFile = documentManager.invoices.first(where: { $0.filename == path }) {
+                Task {
+                    try? await documentManager.deleteDocument(documentFile, type: .invoice)
+                    await MainActor.run {
+                        modelContext.delete(invoice)
+                    }
+                }
+            } else {
+                modelContext.delete(invoice)
+            }
         }
     }
 }

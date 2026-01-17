@@ -7,7 +7,7 @@ struct InvoiceFormView: View {
     @Bindable var invoice: Invoice
     @State private var ocrManager = OCRManager.shared
     @State private var isShowingDeleteConfirm = false
-
+    
     private var currentDocumentFile: DocumentFile? {
         guard let documentManager,
               let path = invoice.path
@@ -85,21 +85,6 @@ struct InvoiceFormView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 2)
             }
-
-            HStack {
-                Button("Re-OCR", systemImage: "doc.text.viewfinder") {
-                    processInvoiceOCR()
-                }
-                .disabled(isOCRProcessing || currentDocumentFile == nil || !APIKeyStore.hasOpenRouterKey())
-
-                if isOCRProcessing {
-                    ProgressView()
-                        .controlSize(.small)
-                        .scaleEffect(0.7)
-                }
-
-                Spacer()
-            }
             
             Labeled("Vendor Name") {
                 TextField("Vendor Name", text: $invoice.vendorName.orEmpty)
@@ -150,7 +135,7 @@ struct InvoiceFormView: View {
     }
     
     private var statusSection: some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             Labeled("Status") {
                 Picker("Invoice Status", selection: $invoice.status) {
                     ForEach(Invoice.Status.allCases) { status in
@@ -161,25 +146,34 @@ struct InvoiceFormView: View {
                 .labelsHidden()
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-
-            Divider()
-
-            HStack {
-                Button("Delete Invoice", systemImage: "trash", role: .destructive) {
-                    isShowingDeleteConfirm = true
+            
+            Button(action: processInvoiceOCR) {
+                Label {
+                    Text(self.isOCRProcessing ? "Rescanning" : "Rescan Invoice")
+                } icon: {
+                    if self.isOCRProcessing {
+                        ProgressView()
+                            .controlSize(.small)
+                            .scaleEffect(0.7)
+                    } else {
+                        Image(systemName: "doc.text.viewfinder")
+                    }
                 }
-                .tint(.red)
-
-                Spacer()
+                
             }
+            .disabled(isOCRProcessing || currentDocumentFile == nil || !APIKeyStore.hasOpenRouterKey())
+            
+            Button("Delete Invoice", systemImage: "trash", role: .destructive) {
+                isShowingDeleteConfirm = true
+            }
+            .tint(.red)
         }
     }
-
+    @State var foo: Bool = false
+    
     private func processInvoiceOCR() {
-        guard let documentManager,
-              let documentFile = currentDocumentFile
-        else { return }
-
+        guard let documentManager, let documentFile = currentDocumentFile else { return }
+        
         Task {
             do {
                 try await ocrManager.processInvoice(
@@ -195,23 +189,23 @@ struct InvoiceFormView: View {
             }
         }
     }
-
+    
     private var amountMismatchWarning: String? {
         guard let preTax = invoice.preTaxAmount,
               let tax = invoice.taxPercentage,
               let total = invoice.totalAmount
         else { return nil }
-
+        
         let expectedTotal = preTax * (1 + tax)
         let delta = abs(expectedTotal - total)
         let tolerance = max(0.01, expectedTotal * 0.005)
         guard delta > tolerance else { return nil }
-
+        
         let currency = invoice.currency?.trimmingCharacters(in: .whitespacesAndNewlines)
         let currencyPrefix = currency?.isEmpty == false ? "\(currency!) " : ""
         return "Pre-tax + tax does not match total. Expected \(currencyPrefix)\(expectedTotal.formatted(.number)), got \(currencyPrefix)\(total.formatted(.number))."
     }
-
+    
     private func warningView(message: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -223,18 +217,18 @@ struct InvoiceFormView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
     }
-
+    
     private var missingDocumentWarning: String? {
         guard let documentManager,
               let path = invoice.path
         else { return nil }
-
+        
         let existsInListing = documentManager.invoices.contains { $0.filename == path }
         guard !existsInListing else { return nil }
-
+        
         return "The document file could not be found. The invoice may need re-import."
     }
-
+    
     private func deleteInvoice() {
         if let documentManager,
            let path = invoice.path,
