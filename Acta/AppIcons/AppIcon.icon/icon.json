@@ -1,0 +1,92 @@
+{
+  "fill" : {
+    "automatic-gradient" : "srgb:0.08604,0.57348,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.94922,0.97630,1.00000,1.00000"
+          },
+          "image-name" : "plutus-icon.svg",
+          "name" : "plutus-icon",
+          "position" : {
+            "scale" : 0.76,
+            "translation-in-points" : [
+              0,
+              70
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.6
+      }
+    },
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.41072,0.72500,1.00000,1.00000"
+          },
+          "image-name" : "Combined Shape 2.svg",
+          "name" : "Combined Shape 2",
+          "position" : {
+            "scale" : 0.82,
+            "translation-in-points" : [
+              2.546875,
+              159.3203125
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "image-name" : "Rectangle 4.svg",
+          "name" : "Rectangle 4",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              4.654849061094278,
+              -67.64785842016026
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
