@@ -41,7 +41,7 @@ extension BankStatement {
             return .unlinked
         }
         
-        return matchedInvoice.status == .linked ? .linked : .unlinked
+        return matchedInvoice.status == .statementVerified ? .verified : .linked
     }
 
     private static let amountFormatter: NumberFormatter = {

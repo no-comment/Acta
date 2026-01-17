@@ -7,7 +7,7 @@ struct InvoiceReviewView: View {
     private var allInvoices: [Invoice]
     
     private var unreviewedInvoices: [Invoice] {
-        allInvoices.filter { $0.status != .verified }
+        allInvoices.filter { $0.status != .ocrVerified }
     }
     
     @State private var currentInvoiceID: Invoice.ID?
@@ -50,7 +50,7 @@ struct InvoiceReviewView: View {
     private func approve() {
         guard let currentInvoice else { return }
         let nextInvoiceID = hasNext ? unreviewedInvoices[currentIndex + 1].id : nil
-        currentInvoice.status = .verified
+        currentInvoice.status = .ocrVerified
         currentInvoiceID = nextInvoiceID
     }
     

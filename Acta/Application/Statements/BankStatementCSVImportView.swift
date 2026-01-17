@@ -500,7 +500,7 @@ struct BankStatementCSVImportView: View {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return (nil, nil) }
 
-        let currency = extractCurrency(from: trimmed)
+        let currency = normalizeCurrency(extractCurrency(from: trimmed))
         let normalized = normalizeAmountString(from: trimmed, decimalSeparator: decimalSeparator)
         guard !normalized.isEmpty else { return (nil, currency) }
         guard let value = Double(normalized) else { return (nil, currency) }
@@ -520,6 +520,22 @@ struct BankStatementCSVImportView: View {
         let letters = raw.unicodeScalars.filter { CharacterSet.letters.contains($0) }
         let text = String(String.UnicodeScalarView(letters)).uppercased()
         return text.isEmpty ? nil : text
+    }
+
+    private func normalizeCurrency(_ currency: String?) -> String? {
+        guard let currency else { return nil }
+        let trimmed = currency.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        switch trimmed.uppercased() {
+        case "EUR":
+            return "€"
+        case "USD":
+            return "$"
+        case "GBP":
+            return "£"
+        default:
+            return trimmed
+        }
     }
 
     private func normalizeAmountString(from raw: String, decimalSeparator: DecimalSeparator) -> String {
@@ -653,11 +669,11 @@ struct BankStatementCSVImportView: View {
     }
 
     private func resolveCurrency(from column: Int, row: [String], fallback: String?) -> String? {
-        guard column >= 0 else { return fallback }
+        guard column >= 0 else { return normalizeCurrency(fallback) }
         let raw = cellValue(row: row, column: column)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { return fallback }
-        return extractCurrency(from: raw) ?? fallback
+        return normalizeCurrency(extractCurrency(from: raw) ?? fallback)
     }
 
     private var normalizedBlacklist: [String] {

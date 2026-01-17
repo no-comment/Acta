@@ -235,7 +235,7 @@ struct InvoiceFormView: View {
     }
 
     private var linkedWithoutBankStatementWarning: String? {
-        guard invoice.status == .linked, invoice.matchedBankStatement == nil else { return nil }
+        guard invoice.status == .statementVerified, invoice.matchedBankStatement == nil else { return nil }
         return "This invoice is marked as linked, but no bank statement is attached."
     }
     

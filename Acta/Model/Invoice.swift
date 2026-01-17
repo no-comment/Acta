@@ -99,8 +99,8 @@ extension Invoice {
     enum Status: String, Identifiable, Codable, Comparable, CaseIterable {
         case new
         case processed
-        case verified
-        case linked
+        case ocrVerified
+        case statementVerified
 
         var id: String { self.rawValue }
 
@@ -108,8 +108,8 @@ extension Invoice {
             switch self {
             case .new: return Image(systemName: "viewfinder.trianglebadge.exclamationmark")
             case .processed: return Image(systemName: "circle")
-            case .verified: return Image(systemName: "checkmark.circle.fill")
-            case .linked: return Image(.linkBadgeCheckmark)
+            case .ocrVerified: return Image(systemName: "checkmark.circle.fill")
+            case .statementVerified: return Image(.linkBadgeCheckmark)
             }
         }
 
@@ -117,13 +117,13 @@ extension Invoice {
             switch self {
             case .new: return "Unscanned"
             case .processed: return "Processed OCR"
-            case .verified: return "Verified OCR"
-            case .linked: return "Linked Bank Statement"
+            case .ocrVerified: return "Verified OCR"
+            case .statementVerified: return "Linked Bank Statement"
             }
         }
 
         static func < (lhs: Status, rhs: Status) -> Bool {
-            let order: [Status] = [.new, .processed, .verified, .linked]
+            let order: [Status] = [.new, .processed, .ocrVerified, .statementVerified]
             guard let lhsIndex = order.firstIndex(of: lhs),
                   let rhsIndex = order.firstIndex(of: rhs) else {
                 return false
@@ -150,7 +150,7 @@ extension Invoice {
 
         let invoice1 = Invoice(tags: [nocommentTag], vendorName: "Wilhelm Gymnasium", invoiceNo: "PW25-01", taxPercentage: 0.19)
         let invoice2 = Invoice(tags: [privateTag], vendorName: "Apple")
-        let invoice3 = Invoice(tags: [nocommentTag], status: .verified, vendorName: "Google", date: Date.now, totalAmount: 12, preTaxAmount: 10, taxPercentage: 0.22, currency: "$", direction: .incoming)
+        let invoice3 = Invoice(tags: [nocommentTag], status: .ocrVerified, vendorName: "Google", date: Date.now, totalAmount: 12, preTaxAmount: 10, taxPercentage: 0.22, currency: "$", direction: .incoming)
 
         modelContext.insert(invoice1)
         modelContext.insert(invoice2)

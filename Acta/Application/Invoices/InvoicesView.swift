@@ -47,7 +47,7 @@ struct InvoicesView: View {
     }
 
     private var unreviewedInvoices: [Invoice] {
-        invoices.filter { $0.status != .verified }
+        invoices.filter { $0.status != .ocrVerified }
     }
 
     private var deleteConfirmationMessage: String {
