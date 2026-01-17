@@ -9,7 +9,7 @@ struct InvoicesView: View {
     @Query private var tagGroups: [TagGroup]
     @Query private var tags: [Tag]
     
-    @SceneStorage("BugReportTableConfig") private var columnCustomization: TableColumnCustomization<Invoice>
+    @SceneStorage("InvoiceColumnCustomization") private var columnCustomization: TableColumnCustomization<Invoice>
     
     @State private var isProcessingOCR = false
     @State private var ocrManager = OCRManager.shared
