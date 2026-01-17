@@ -4,9 +4,18 @@ struct SettingsView: View {
     @State private var openRouterKey: String = ""
     @State private var statusMessage: String?
     @State private var isSaving = false
+    @AppStorage(SettingsKeys.userDisplayName) private var userDisplayName = ""
 
     var body: some View {
         Form {
+            Section("Identity") {
+                TextField("Your name or company", text: $userDisplayName)
+
+                Text("Used to determine incoming vs outgoing invoices and to avoid using your name as vendor.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("OCR") {
                 SecureField("OpenRouter API Key", text: $openRouterKey)
                     .textContentType(.password)

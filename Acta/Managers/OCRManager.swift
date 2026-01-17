@@ -2,8 +2,8 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Observation
-import UniformTypeIdentifiers
 import os
+import UniformTypeIdentifiers
 
 private let logger = Logger(subsystem: "xyz.no-comment.Acta", category: "OCRManager")
 
@@ -61,12 +61,17 @@ final class OCRManager {
             fileExtension: document.fileExtension,
             url: document.url
         )
+        let userDisplayName = OCRManager.loadUserDisplayName()
         let apiKey = resolvedKey
 
         let task = Task {
             let ocrTask = Task.detached {
                 try Task.checkCancellation()
-                return try await OCRManager.performOCR(input: input, apiKey: apiKey)
+                return try await OCRManager.performOCR(
+                    input: input,
+                    apiKey: apiKey,
+                    userDisplayName: userDisplayName
+                )
             }
             await MainActor.run {
                 inFlightOCRTasks[key] = ocrTask
@@ -143,14 +148,22 @@ final class OCRManager {
     /// - Parameter input: The OCR input payload.
     /// - Returns: An OCRResult with extracted data.
     /// - Throws: OCRError if the file type is not supported or processing fails.
-    private nonisolated static func performOCR(input: OCRInput, apiKey: String) async throws -> OCRResult {
+    private nonisolated static func performOCR(
+        input: OCRInput,
+        apiKey: String,
+        userDisplayName: String?
+    ) async throws -> OCRResult {
         try Task.checkCancellation()
         let url = input.url
         let fileType = try resolveFileType(fileExtension: input.fileExtension)
         let base64PDF = try makeBase64PDF(from: url, fileType: fileType)
 
         try Task.checkCancellation()
-        let responseData = try await performOCRRequest(base64PDF: base64PDF, apiKey: apiKey)
+        let responseData = try await performOCRRequest(
+            base64PDF: base64PDF,
+            apiKey: apiKey,
+            userDisplayName: userDisplayName
+        )
         let result = try parseOCRResult(from: responseData)
 
         return result
@@ -193,10 +206,29 @@ final class OCRManager {
         return pdfData.base64EncodedString()
     }
 
-    private nonisolated static func performOCRRequest(base64PDF: String, apiKey: String) async throws -> Data {
+    private nonisolated static func performOCRRequest(
+        base64PDF: String,
+        apiKey: String,
+        userDisplayName: String?
+    ) async throws -> Data {
+        let userContext: String
+        if let userDisplayName, !userDisplayName.isEmpty {
+            userContext = """
+            The user's name or company is "\(userDisplayName)".
+            Use this to determine invoice direction:
+            - incoming: invoice addressed to the user (buyer/recipient/payer).
+            - outgoing: invoice issued by the user to someone else (seller/issuer).
+            Return vendor as the counterparty name, not the user's own name.
+            If direction cannot be determined, return null.
+            """
+        } else {
+            userContext = ""
+        }
+
         let prompt = """
         Extract invoice data from this document. Focus on the main vendor, the invoice identifier, totals,
         pre-tax amount, and tax percentage when available.
+        \(userContext)
         If a field is not present, return null. Use ISO 8601 dates (YYYY-MM-DD).
         Return taxPercentage as a decimal fraction (e.g., 0.07 for 7%).
         """
@@ -216,7 +248,17 @@ final class OCRManager {
                 ],
                 "currency": ["type": ["string", "null"]],
                 "taxAmount": ["type": ["number", "null"]],
-                "rawText": ["type": "string"]
+                "direction": [
+                    "anyOf": [
+                        [
+                            "type": "string",
+                            "enum": ["incoming", "outgoing"]
+                        ],
+                        [
+                            "type": "null"
+                        ]
+                    ]
+                ]
             ],
             "required": [
                 "vendor",
@@ -227,7 +269,7 @@ final class OCRManager {
                 "taxPercentage",
                 "currency",
                 "taxAmount",
-                "rawText"
+                "direction"
             ],
             "additionalProperties": false
         ]
@@ -325,6 +367,7 @@ final class OCRManager {
         let vendor = parsed["vendor"] as? String
         let invoiceNumber = parsed["invoiceNumber"] as? String
         let currency = (parsed["currency"] as? String)?.uppercased()
+        let direction = (parsed["direction"] as? String).flatMap(Invoice.Direction.init(rawValue:))
 
         let date: Date? = {
             guard let dateString = parsed["date"] as? String else { return nil }
@@ -345,7 +388,7 @@ final class OCRManager {
             preTaxAmount: preTaxAmount,
             taxPercentage: taxPercentage,
             currency: currency,
-            direction: .outgoing
+            direction: direction
         )
     }
 
@@ -362,7 +405,16 @@ final class OCRManager {
         }
         return nil
     }
+}
 
+extension OCRManager {
+    static func loadUserDisplayName() -> String? {
+        guard let value = UserDefaults.standard.string(forKey: SettingsKeys.userDisplayName) else {
+            return nil
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
 
 // MARK: - OCR Input
