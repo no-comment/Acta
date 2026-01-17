@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct InvoiceFormView: View {
     @Environment(\.modelContext) private var modelContext
@@ -41,6 +41,9 @@ struct InvoiceFormView: View {
                 warningView(message: warning)
             }
             if let warning = missingDocumentWarning {
+                warningView(message: warning)
+            }
+            if let warning = linkedWithoutBankStatementWarning {
                 warningView(message: warning)
             }
             statusSection
@@ -139,8 +142,12 @@ struct InvoiceFormView: View {
             Labeled("Status") {
                 Picker("Invoice Status", selection: $invoice.status) {
                     ForEach(Invoice.Status.allCases) { status in
-                        Label(status.label, systemImage: status.iconName)
-                            .tag(status)
+                        Label(title: {
+                            Text(status.label)
+                        }, icon: {
+                            status.icon
+                        })
+                        .tag(status)
                     }
                 }
                 .labelsHidden()
@@ -159,8 +166,7 @@ struct InvoiceFormView: View {
                         Image(systemName: "doc.text.viewfinder")
                     }
                 }
-                
-            }
+             }
             .disabled(isOCRProcessing || currentDocumentFile == nil || !APIKeyStore.hasOpenRouterKey())
             
             Button("Delete Invoice", systemImage: "trash", role: .destructive) {
@@ -169,6 +175,7 @@ struct InvoiceFormView: View {
             .tint(.red)
         }
     }
+
     @State var foo: Bool = false
     
     private func processInvoiceOCR() {
@@ -227,6 +234,11 @@ struct InvoiceFormView: View {
         guard !existsInListing else { return nil }
         
         return "The document file could not be found. The invoice may need re-import."
+    }
+
+    private var linkedWithoutBankStatementWarning: String? {
+        guard invoice.status == .linked, invoice.matchedBankStatement == nil else { return nil }
+        return "This invoice is marked as linked, but no bank statement is attached."
     }
     
     private func deleteInvoice() {

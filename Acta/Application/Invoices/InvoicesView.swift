@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct InvoicesView: View {
     @Environment(\.modelContext) private var modelContext
@@ -48,7 +48,6 @@ struct InvoicesView: View {
         invoices.filter { $0.status != .verified }
     }
 
-    
     var body: some View {
         table
             .frame(minWidth: 300, minHeight: 300)
@@ -64,7 +63,7 @@ struct InvoicesView: View {
     private var table: some View {
         Table(sortedInvoices, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
             TableColumn("", value: \.status.rawValue) { invoice in
-                Image(systemName: invoice.status.iconName)
+                invoice.status.icon
                     .help(invoice.status.label)
             }
             .width(16)
@@ -186,6 +185,7 @@ struct InvoicesView: View {
     }
     
     // MARK: - Logic
+
     private func batchProcessInvoices(_ wantedInvoices: [Invoice]) {
         guard let documentManager else { return }
         
