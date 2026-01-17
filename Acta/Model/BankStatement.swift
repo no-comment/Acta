@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class BankStatement {
@@ -17,6 +18,66 @@ final class BankStatement {
         self.reference = reference
         self.amountString = amountString
         self.notes = notes
+    }
+}
+
+extension BankStatement {
+    var amount: Double {
+        // TODO: Calculate Amount
+        return 0
+    }
+    
+    var linkedFilePath: String? {
+        guard let matchedInvoice, let path = matchedInvoice.path else { return nil }
+        return path
+    }
+    
+    var status: Status {
+        // TODO: check invoice status
+        if let matchedInvoice, false {
+            return .linked
+        }
+        
+        if self.matchedInvoice != nil {
+            return .linked
+        }
+        
+        return .unlinked
+    }
+}
+
+extension BankStatement {
+    enum Status: String, Identifiable, Codable, Comparable, CaseIterable {
+        case unlinked = "unlinked"
+        case linked = "linked"
+        case verified = "verified"
+
+        var id: String { self.rawValue }
+
+        var icon: Image {
+            switch self {
+            case .unlinked: Image(systemName: "questionmark.circle.dashed")
+            case .linked: Image(systemName: "link")
+            case .verified: Image(systemName: "checkmark.circle.fill")
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .unlinked: return "Unlinked"
+            case .linked: return "Linked to Invoice"
+            case .verified: return "Linked & Verified"
+            }
+        }
+
+        static func < (lhs: Status, rhs: Status) -> Bool {
+            let order: [Status] = [.unlinked, .linked, .verified]
+            guard let lhsIndex = order.firstIndex(of: lhs),
+                  let rhsIndex = order.firstIndex(of: rhs) else {
+                return false
+            }
+            return lhsIndex < rhsIndex
+        }
     }
 }
 

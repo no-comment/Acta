@@ -1,14 +1,28 @@
 import SwiftUI
+import SwiftData
 import UniformTypeIdentifiers
 
 struct BankStatementsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(DocumentManager.self) private var documentManager: DocumentManager?
+    @Query private var statements: [BankStatement]
+    
+    @SceneStorage("BankStatementColumnCustomization") private var columnCustomization: TableColumnCustomization<BankStatement>
+    @State private var sortOrder = [KeyPathComparator(\BankStatement.date), KeyPathComparator(\BankStatement.account)]
+    @State private var selection: BankStatement.ID?
+    
     @State private var isTargeted = false
     @State private var importURL: URL?
     @State private var errorMessage: String?
     @State private var showError = false
-
+    
+    private var sortedStatements: [BankStatement] {
+        self.statements
+    }
+    
     var body: some View {
         content
+            .toolbar(content: toolbar)
             .dropDestination(for: URL.self) { urls, _ in
                 guard let url = urls.first else { return false }
                 return handleDrop(url: url)
@@ -31,28 +45,71 @@ struct BankStatementsView: View {
                 Text(errorMessage ?? "Unknown error")
             }
     }
-
+    
+    @ViewBuilder
     private var content: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "tray.and.arrow.down")
-                .font(.system(size: 28))
-                .foregroundStyle(.secondary)
-            Text("Drop a CSV to Import")
-                .font(.headline)
-            Text("Preview and map bank statement columns before importing.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        if self.statements.isEmpty {
+            ContentUnavailableView("No Bank Statements", systemImage: "tray.and.arrow.down", description: Text("Drop a CSV file to import your first bank statement"))
+        } else if self.sortedStatements.isEmpty {
+            ContentUnavailableView("No Match", systemImage: "text.page.badge.magnifyingglass", description: Text("There was no match for your search parameters"))
+        } else {
+            table
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
-
+    
+    private var table: some View {
+        Table(self.sortedStatements, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
+            TableColumn("") { statement in
+                statement.status.icon
+                    .help(statement.status.label)
+            }
+            .width(16)
+            .disabledCustomizationBehavior(.all)
+            .customizationID("status")
+            
+            TableColumn("Account", value: \.account)
+                .customizationID("accountName")
+            
+            TableColumn("Date") { statement in
+                Text(statement.date?.formatted(date: .numeric, time: .omitted) ?? "N/A")
+            }
+            .customizationID("date")
+            
+            TableColumn("Amount", value: \.amountString)
+                .customizationID("amount")
+            TableColumn("Reference", value: \.reference)
+                .customizationID("reference")
+            TableColumn("Notes", value: \.notes)
+                .customizationID("notes")
+            TableColumn("Linked Invoice") { statement in
+                Text(statement.linkedFilePath ?? "")
+            }
+            .defaultVisibility(.hidden)
+            .customizationID("linkedFileName")
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private func toolbar() -> some ToolbarContent {
+        ToolbarItemGroup(placement: .principal) {
+            Button("Generate Sample Data", systemImage: "plus") {
+                BankStatement.generateMockData(modelContext: modelContext)
+            }
+            
+            Button("Delete All", systemImage: "trash", role: .destructive) {
+                for statement in statements {
+                    modelContext.delete(statement)
+                }
+            }
+        }
+    }
+    
     private var dropOverlay: some View {
         VStack(spacing: 8) {
-            Image(systemName: "doc.text.fill")
+            Image(systemName: "arrow.down.doc.fill")
                 .font(.system(size: 32))
                 .foregroundStyle(.secondary)
-            Text("Drop CSV to Parse")
+            Text("Drop to Import")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -60,7 +117,7 @@ struct BankStatementsView: View {
         .padding(.vertical, 16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
-
+    
     private var sheetPresented: Binding<Bool> {
         Binding(
             get: { importURL != nil },
@@ -71,19 +128,19 @@ struct BankStatementsView: View {
             }
         )
     }
-
+    
     private func handleDrop(url: URL) -> Bool {
         guard let type = UTType(filenameExtension: url.pathExtension) else {
             errorMessage = "Unsupported file type"
             showError = true
             return false
         }
-
+        
         if type.conforms(to: .commaSeparatedText) || type.conforms(to: .plainText) {
             importURL = url
             return true
         }
-
+        
         errorMessage = "Only CSV files can be imported"
         showError = true
         return false
