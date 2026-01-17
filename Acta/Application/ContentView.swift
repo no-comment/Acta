@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContentView: View {
     @SceneStorage("ActiveMainView") private var mainView: ActaApp.MainView = .invoices
@@ -16,12 +16,11 @@ struct ContentView: View {
                     Menu(mainView.title) {
                         ForEach(ActaApp.MainView.allCases) { view in
                             Button(view.title, action: { self.mainView = view })
+                                .padding(.horizontal)
                         }
                     }
                     .font(.headline)
-                    .contentShape(.rect)
                 }
-                .sharedBackgroundVisibility(.hidden)
             }
     }
     
