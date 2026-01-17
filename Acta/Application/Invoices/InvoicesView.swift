@@ -60,7 +60,6 @@ struct InvoicesView: View {
 
     var body: some View {
         table
-            .frame(minWidth: 300, minHeight: 300)
             .toolbar(content: { self.toolbar })
             .inspector(isPresented: showInspector, content: {
                 if let selectedInvoice {

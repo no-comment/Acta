@@ -20,9 +20,30 @@ struct BankStatementsView: View {
         self.statements
     }
     
+    private var selectedStatement: BankStatement? {
+        guard let selection else { return nil }
+        return statements.first { $0.id == selection }
+    }
+    
+    private var showInspector: Binding<Bool> {
+        Binding(
+            get: { selectedStatement != nil },
+            set: { newValue in
+                if newValue == false {
+                    selection = nil
+                }
+            }
+        )
+    }
+    
     var body: some View {
         content
             .toolbar(content: toolbar)
+            .inspector(isPresented: showInspector, content: {
+                if let selectedStatement {
+                    BankStatementInspectorView(for: selectedStatement, onClose: { self.selection = nil })
+                }
+            })
             .dropDestination(for: URL.self) { urls, _ in
                 guard let url = urls.first else { return false }
                 return handleDrop(url: url)

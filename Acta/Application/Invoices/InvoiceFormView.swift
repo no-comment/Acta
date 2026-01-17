@@ -53,10 +53,8 @@ struct InvoiceFormView: View {
             isPresented: $isShowingDeleteConfirm,
             titleVisibility: .visible
         ) {
-            Button("Delete Invoice", role: .destructive) {
-                deleteInvoice()
-            }
-            Button("Cancel", role: .cancel) {}
+            Button("Delete Invoice", role: .destructive, action: deleteInvoice)
+            Button("Cancel", role: .cancel, action: {})
         }
     }
     
