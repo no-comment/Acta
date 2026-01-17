@@ -237,6 +237,9 @@ struct InvoicesView: View {
                         invoice: invoice,
                         documentManager: documentManager
                     )
+                    await MainActor.run {
+                        try? modelContext.save()
+                    }
                 } catch is CancellationError {
                     break
                 } catch {

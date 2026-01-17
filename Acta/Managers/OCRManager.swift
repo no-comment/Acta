@@ -95,6 +95,9 @@ final class OCRManager {
                 to: newBaseName,
                 type: .invoice
             )
+            await MainActor.run {
+                invoice.path = newFilename
+            }
 
             return OCRCompletion(result: result, filename: newFilename)
         }
@@ -117,7 +120,6 @@ final class OCRManager {
         }
 
         invoice.applyOCRResult(completion.result)
-        invoice.path = completion.filename
         logger.info("✅ Invoice processed successfully: \(document.filename)")
     }
 
