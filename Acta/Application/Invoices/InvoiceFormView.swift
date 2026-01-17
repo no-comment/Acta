@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct InvoiceFormView: View {
+    @Environment(DocumentManager.self) private var documentManager: DocumentManager?
     @Bindable var invoice: Invoice
-    var documentURL: URL?
+
+    private var documentURL: URL? {
+        documentManager?.getURL(for: invoice)
+    }
 
     private var directionBinding: Binding<Invoice.Direction> {
         Binding(

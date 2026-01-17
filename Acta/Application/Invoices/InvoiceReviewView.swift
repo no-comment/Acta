@@ -109,14 +109,24 @@ struct InvoiceReviewView: View {
         }
     }
 
+    @ViewBuilder
     private var documentPreview: some View {
-        DocumentPreviewView(url: documentURL)
-            .id(documentURL)
+        if let documentURL {
+            DocumentPreviewView(url: documentURL)
+                .id(documentURL)
+        } else if currentInvoice?.path == nil {
+            ContentUnavailableView {
+                Label("No Document", systemImage: "doc")
+            } description: {
+                Text("This invoice has no associated document.")
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 
     private func formPanel(for invoice: Invoice) -> some View {
         ScrollView {
-            InvoiceFormView(invoice: invoice, documentURL: documentURL)
+            InvoiceFormView(invoice: invoice)
                 .padding()
         }
     }

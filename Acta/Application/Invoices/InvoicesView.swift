@@ -16,9 +16,14 @@ struct InvoicesView: View {
     @State private var sortOrder = [KeyPathComparator(\Invoice.status), KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
     
+    private var selectedInvoice: Invoice? {
+        guard let selection else { return nil }
+        return invoices.first { $0.id == selection }
+    }
+    
     private var showInspector: Binding<Bool> {
         Binding(
-            get: { selection != nil },
+            get: { selectedInvoice != nil },
             set: { newValue in
                 if newValue == false {
                     selection = nil
@@ -44,7 +49,9 @@ struct InvoicesView: View {
             .frame(minWidth: 300, minHeight: 300)
             .toolbar(content: { self.toolbar })
             .inspector(isPresented: showInspector, content: {
-                InvoiceInspectorView(for: $selection)
+                if let selectedInvoice {
+                    InvoiceInspectorView(invoice: selectedInvoice, onClose: { selection = nil })
+                }
             })
             .invoiceDropImporter(documentManager: documentManager)
     }
