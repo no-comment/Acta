@@ -7,9 +7,25 @@
       "blur-material" : null,
       "layers" : [
         {
-          "fill" : {
-            "automatic-gradient" : "srgb:0.94922,0.97630,1.00000,1.00000"
-          },
+          "fill-specializations" : [
+            {
+              "value" : {
+                "automatic-gradient" : "srgb:0.94922,0.97630,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "automatic-gradient" : "srgb:0.00000,0.53328,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "automatic-gradient" : "srgb:0.94922,0.97630,1.00000,1.00000"
+              }
+            }
+          ],
           "image-name" : "plutus-icon.svg",
           "name" : "plutus-icon",
           "position" : {
@@ -34,9 +50,25 @@
       "blur-material" : null,
       "layers" : [
         {
-          "fill" : {
-            "automatic-gradient" : "srgb:0.41072,0.72500,1.00000,1.00000"
-          },
+          "fill-specializations" : [
+            {
+              "value" : {
+                "automatic-gradient" : "srgb:0.41072,0.72500,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "automatic-gradient" : "srgb:0.11403,0.11403,0.11403,1.00000"
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "automatic-gradient" : "srgb:0.19195,0.33884,0.46736,1.00000"
+              }
+            }
+          ],
           "image-name" : "Combined Shape 2.svg",
           "name" : "Combined Shape 2",
           "position" : {
@@ -61,6 +93,25 @@
       "blur-material" : null,
       "layers" : [
         {
+          "fill-specializations" : [
+            {
+              "value" : {
+                "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "srgb:0.55431,0.55431,0.55431,1.00000"
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "solid" : "srgb:0.73363,0.73363,0.73363,1.00000"
+              }
+            }
+          ],
           "image-name" : "Rectangle 4.svg",
           "name" : "Rectangle 4",
           "position" : {
