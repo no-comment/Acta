@@ -68,6 +68,7 @@ struct InvoicesView: View {
                     .help(invoice.status.label)
             }
             .width(16)
+            .disabledCustomizationBehavior(.all)
             .customizationID("status")
 
             TableColumn("Vendor", value: \.vendorName)

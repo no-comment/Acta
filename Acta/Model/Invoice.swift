@@ -16,6 +16,8 @@ final class Invoice {
     var taxPercentage: Double?
     var currency: String?
     var direction: Direction?
+    
+    var matchedBankStatement: BankStatement?
 
     init(path: String? = nil, tags: [Tag], status: Status = .new, vendorName: String? = nil, date: Date? = nil, invoiceNo: String? = nil, totalAmount: Double? = nil, preTaxAmount: Double? = nil, taxPercentage: Double? = nil, currency: String? = nil, direction: Direction? = nil) {
         self.path = path

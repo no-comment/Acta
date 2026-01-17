@@ -6,7 +6,7 @@ import SwiftUI
 enum DataStoreConfig {
     @MainActor
     static let container: ModelContainer = {
-        try! ModelContainer(for: Invoice.self, Tag.self, TagGroup.self)
+        try! ModelContainer(for: Invoice.self, Tag.self, TagGroup.self, BankStatement.self)
     }()
 }
 
@@ -61,7 +61,7 @@ struct DataContainerViewModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .generateData()
-            .modelContainer(for: [Invoice.self, Tag.self, TagGroup.self], inMemory: inMemory)
+            .modelContainer(for: [Invoice.self, Tag.self, TagGroup.self, BankStatement.self], inMemory: inMemory)
     }
 }
 
@@ -79,6 +79,7 @@ struct GenerateDataViewModifier: ViewModifier {
             TagGroup.generateMockData(modelContext: modelContext)
             Tag.generateMockData(modelContext: modelContext)
             Invoice.generateMockData(modelContext: modelContext)
+            BankStatement.generateMockData(modelContext: modelContext)
         }
     }
 }
