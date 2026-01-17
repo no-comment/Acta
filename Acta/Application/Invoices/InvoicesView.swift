@@ -19,6 +19,8 @@ struct InvoicesView: View {
     
     @State private var sortOrder = [KeyPathComparator(\Invoice.status), KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
+    @State private var showDeleteConfirmation = false
+    @State private var pendingDeleteIDs: Set<Invoice.ID> = []
     
     private var selectedInvoice: Invoice? {
         guard let selection else { return nil }
@@ -48,6 +50,14 @@ struct InvoicesView: View {
         invoices.filter { $0.status != .verified }
     }
 
+    private var deleteConfirmationMessage: String {
+        let count = pendingDeleteIDs.count
+        if count == 1 {
+            return "Delete this invoice? This will also remove the file from iCloud Drive."
+        }
+        return "Delete \(count) invoices? This will also remove their files from iCloud Drive."
+    }
+
     var body: some View {
         table
             .frame(minWidth: 300, minHeight: 300)
@@ -58,6 +68,19 @@ struct InvoicesView: View {
                 }
             })
             .invoiceDropImporter(documentManager: documentManager)
+            .confirmationDialog("Delete Invoices",
+                                isPresented: $showDeleteConfirmation,
+                                titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    deleteInvoices(pendingDeleteIDs)
+                    pendingDeleteIDs.removeAll()
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingDeleteIDs.removeAll()
+                }
+            } message: {
+                Text(deleteConfirmationMessage)
+            }
     }
     
     private var table: some View {
@@ -117,7 +140,7 @@ struct InvoicesView: View {
         .contextMenu(forSelectionType: Invoice.ID.self) { items in
             Button("Rescan Invoice", systemImage: "doc.text.viewfinder", action: { batchProcessInvoices(iDs: items) })
                 .disabled(documentManager == nil || isProcessingOCR || !APIKeyStore.hasOpenRouterKey())
-            Button("Delete Invoice", systemImage: "trash", role: .destructive, action: { deleteInvoices(items) })
+            Button("Delete Invoice", systemImage: "trash", role: .destructive, action: { requestDeleteConfirmation(for: items) })
                 .tint(.red)
         } primaryAction: { items in
             guard let invoiceID = items.first else { return }
@@ -249,6 +272,11 @@ struct InvoicesView: View {
                 modelContext.delete(invoice)
             }
         }
+    }
+
+    private func requestDeleteConfirmation(for invoiceIDs: Set<Invoice.ID>) {
+        pendingDeleteIDs = invoiceIDs
+        showDeleteConfirmation = !invoiceIDs.isEmpty
     }
 }
 
