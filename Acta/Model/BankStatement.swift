@@ -37,16 +37,11 @@ extension BankStatement {
     }
     
     var status: Status {
-        // TODO: check invoice status
-        if let matchedInvoice, false {
-            return .linked
+        guard let matchedInvoice else {
+            return .unlinked
         }
         
-        if self.matchedInvoice != nil {
-            return .linked
-        }
-        
-        return .unlinked
+        return matchedInvoice.status == .linked ? .linked : .unlinked
     }
 
     private static let amountFormatter: NumberFormatter = {
