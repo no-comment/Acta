@@ -20,12 +20,14 @@ struct BankStatementCSVImportView: View {
     @State private var dateFormat = "yyyy-MM-dd"
     @State private var accountName = ""
 
+    @AppStorage("BankStatementImportBlacklist") private var blacklistDefaultsString = ""
+    @State private var blacklistTokens: [String] = []
+
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var didSetInitialRanges = false
     @State private var columnVersion = 0
     @State private var didAutoDetectDelimiter = false
-
     var body: some View {
         HSplitView {
             previewPane
@@ -48,12 +50,23 @@ struct BankStatementCSVImportView: View {
                 Button("Save") {
                     saveStatements()
                 }
-                .disabled(croppedRows.isEmpty)
+                .disabled(filteredRows.isEmpty)
             }
         }
-        .onAppear(perform: loadFile)
+        .onAppear {
+            loadFile()
+            blacklistTokens = sanitizeBlacklist(tokens(from: blacklistDefaultsString))
+        }
         .onChange(of: delimiter) { _, _ in
             parse()
+        }
+        .onChange(of: blacklistTokens) { _, newValue in
+            let sanitized = sanitizeBlacklist(newValue)
+            if sanitized != newValue {
+                blacklistTokens = sanitized
+                return
+            }
+            blacklistDefaultsString = sanitized.joined(separator: ",")
         }
         .alert("CSV Import Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
@@ -78,6 +91,8 @@ struct BankStatementCSVImportView: View {
                             Text(cellValue(row: row.cells, column: column))
                                 .lineLimit(1)
                                 .truncationMode(.tail)
+                                .strikethrough(row.isBlacklisted, color: .secondary)
+                                .opacity(row.isBlacklisted ? 0.5 : 1.0)
                         }
                         .width(min: 100, ideal: 180, max: 360)
                     }
@@ -149,6 +164,17 @@ struct BankStatementCSVImportView: View {
                     TextField("Account name", text: $accountName)
                         .textFieldStyle(.roundedBorder)
                 }
+
+                GroupBox("Blacklist") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TokenField(tokens: $blacklistTokens, placeholder: "Reference contains...")
+                            .frame(minHeight: 24)
+
+                        Text("Ignore rows whose reference contains any of these tokens.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .padding()
         }
@@ -189,9 +215,22 @@ struct BankStatementCSVImportView: View {
         }
     }
 
+    private var filteredRows: [[String]] {
+        let blacklist = normalizedBlacklist
+        guard !blacklist.isEmpty else { return croppedRows }
+        return croppedRows.filter { row in
+            !rowIsBlacklisted(row, blacklist: blacklist)
+        }
+    }
+
     private var previewRows: [PreviewRow] {
-        croppedRows.enumerated().map { offset, row in
-            PreviewRow(id: rowStart + offset, cells: row)
+        let blacklist = normalizedBlacklist
+        return croppedRows.enumerated().map { offset, row in
+            PreviewRow(
+                id: rowStart + offset,
+                cells: row,
+                isBlacklisted: rowIsBlacklisted(row, blacklist: blacklist)
+            )
         }
     }
 
@@ -206,7 +245,7 @@ struct BankStatementCSVImportView: View {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = dateFormat
 
-        let values: [String] = croppedRows.compactMap { row in
+        let values: [String] = filteredRows.compactMap { row in
             let value = cellValue(row: row, column: dateColumn)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             return value.isEmpty ? nil : value
@@ -285,7 +324,7 @@ struct BankStatementCSVImportView: View {
     }
 
     private func saveStatements() {
-        guard !croppedRows.isEmpty else { return }
+        guard !filteredRows.isEmpty else { return }
 
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -305,7 +344,7 @@ struct BankStatementCSVImportView: View {
             )
         })
 
-        for row in croppedRows {
+        for row in filteredRows {
             let dateString = cellValue(row: row, column: dateColumn)
             let reference = cellValue(row: row, column: referenceColumn)
             let amount = cellValue(row: row, column: amountColumn)
@@ -367,11 +406,47 @@ struct BankStatementCSVImportView: View {
         amountColumn = min(max(amountColumn, 0), maxColumnIndex)
     }
 
+    private func tokens(from string: String) -> [String] {
+        string
+            .split(separator: ",", omittingEmptySubsequences: true)
+            .map { String($0) }
+    }
+
+    private func sanitizeBlacklist(_ tokens: [String]) -> [String] {
+        var seen: Set<String> = []
+        var sanitized: [String] = []
+
+        for token in tokens {
+            let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            let key = trimmed.lowercased()
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            sanitized.append(trimmed)
+        }
+
+        return sanitized
+    }
+
+    private var normalizedBlacklist: [String] {
+        blacklistTokens.map { $0.lowercased() }
+    }
+
+    private func rowIsBlacklisted(_ row: [String], blacklist: [String]) -> Bool {
+        guard !blacklist.isEmpty else { return false }
+        let reference = cellValue(row: row, column: referenceColumn)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard !reference.isEmpty else { return false }
+        return blacklist.contains { reference.contains($0) }
+    }
+
 }
 
 private struct PreviewRow: Identifiable {
     let id: Int
     let cells: [String]
+    let isBlacklisted: Bool
 }
 
 private enum CSVDelimiter: String, CaseIterable, Identifiable {
