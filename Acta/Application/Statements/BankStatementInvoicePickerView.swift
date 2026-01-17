@@ -19,6 +19,10 @@ struct BankStatementInvoicePickerView: View {
     @State private var sortOrder = [KeyPathComparator(\Invoice.status), KeyPathComparator(\Invoice.vendorName)]
     @State private var selection: Invoice.ID?
     
+    private var selectedInvoice: Invoice? {
+        invoices.first { $0.id == selection }
+    }
+    
     init(for statementID: BankStatement.ID) {
         self.statementID = statementID
     }
@@ -29,21 +33,33 @@ struct BankStatementInvoicePickerView: View {
                 statementSection(for: statement)
                 invoiceSection
             }
-            .navigationTitle("Statement Invoice Matching")
+            .navigationTitle("Bank Statement & Invoice Matching")
+            .onChange(of: selectedInvoice) { oldValue, newValue in
+                guard let newValue else { return }
+                statement.matchedInvoice = newValue
+            }
+            .onAppear(perform: { self.selection = statement.matchedInvoice?.id})
         } else {
             ContentUnavailableView("Bank Statement Not Found", systemImage: "doc.questionmark")
-                .navigationTitle("Statement Invoice Matching")
+                .navigationTitle("Bank Statement & Invoice Matching")
         }
     }
     
     private func statementSection(for statement: BankStatement) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
+                Labeled("Status") {
+                    Label {
+                        Text(statement.status.label)
+                    } icon: {
+                        statement.status.icon
+                    }
+                }
+                
                 Labeled("Account Name") {
                     Text(statement.account ?? "N/A")
                         .fontDesign(.monospaced)
                 }
-                .frame(minWidth: 100, idealWidth: 200, alignment: .leading)
                 
                 Labeled("Payment Date") {
                     Text(statement.date?.formatted(date: .numeric, time: .omitted) ?? "N/A")
