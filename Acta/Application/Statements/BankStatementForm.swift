@@ -39,7 +39,11 @@ struct BankStatementForm: View {
             }
             
             Labeled("Amount") {
-                TextField("Amount", text: $statement.amountString.orEmpty)
+                TextField("Amount", value: $statement.amount.orZero, format: .number)
+            }
+
+            Labeled("Currency") {
+                TextField("Currency", text: $statement.currency.orEmpty)
             }
             
             Labeled("Reference") {

@@ -51,7 +51,7 @@ struct BankStatementInvoicePickerView: View {
                 }
                 
                 Labeled("Amount") {
-                    Text(statement.amountString ?? "N/A")
+                    Text(statement.amountDisplay ?? "N/A")
                         .fontDesign(.monospaced)
                 }
                 

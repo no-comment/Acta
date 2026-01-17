@@ -17,8 +17,10 @@ struct BankStatementCSVImportView: View {
     @State private var dateColumn = 0
     @State private var referenceColumn = 0
     @State private var amountColumn = 0
+    @State private var currencyColumn = -1
     @State private var dateFormat = "yyyy-MM-dd"
     @State private var accountName = ""
+    @State private var decimalSeparator: DecimalSeparator = .comma
 
     @AppStorage("BankStatementImportBlacklist") private var blacklistDefaultsString = ""
     @State private var blacklistTokens: [String] = []
@@ -28,6 +30,20 @@ struct BankStatementCSVImportView: View {
     @State private var didSetInitialRanges = false
     @State private var columnVersion = 0
     @State private var didAutoDetectDelimiter = false
+
+    private enum DecimalSeparator: String, Identifiable, CaseIterable {
+        case dot = "."
+        case comma = ","
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .dot: return "Dot (.)"
+            case .comma: return "Comma (,)"
+            }
+        }
+    }
     var body: some View {
         HSplitView {
             previewPane
@@ -86,15 +102,23 @@ struct BankStatementCSVImportView: View {
                 ContentUnavailableView("No CSV Data", systemImage: "tablecells")
             } else {
                 Table(previewRows) {
-                    TableColumnForEach(visibleColumns, id: \.self) { column in
-                        TableColumn(columnLabel(for: column)) { row in
-                            Text(cellValue(row: row.cells, column: column))
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .strikethrough(row.isBlacklisted, color: .secondary)
-                                .opacity(row.isBlacklisted ? 0.5 : 1.0)
+                    TableColumnForEach(previewColumns, id: \.self) { column in
+                        switch column {
+                        case .data(let index):
+                            TableColumn(columnLabel(for: index)) { row in
+                                Text(cellValue(row: row.cells, column: index))
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                    .strikethrough(row.isBlacklisted, color: .secondary)
+                                    .opacity(row.isBlacklisted ? 0.5 : 1.0)
+                            }
+                            .width(min: 100, ideal: 180, max: 360)
+                        case .parsedAmount:
+                            TableColumn("Parsed Amount") { row in
+                                amountParseCell(for: row)
+                            }
+                            .width(min: 120, ideal: 160, max: 220)
                         }
-                        .width(min: 100, ideal: 180, max: 360)
                     }
                 }
                 .id(tableIdentity)
@@ -125,7 +149,7 @@ struct BankStatementCSVImportView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Picker("Date column", selection: $dateColumn) {
                             ForEach(columnIndices, id: \.self) { column in
-                                Text(columnLabel(for: column)).tag(column)
+                                Text(columnPickerLabel(for: column)).tag(column)
                             }
                         }
                         .pickerStyle(.menu)
@@ -144,7 +168,7 @@ struct BankStatementCSVImportView: View {
 
                         Picker("Reference column", selection: $referenceColumn) {
                             ForEach(columnIndices, id: \.self) { column in
-                                Text(columnLabel(for: column)).tag(column)
+                                Text(columnPickerLabel(for: column)).tag(column)
                             }
                         }
                         .pickerStyle(.menu)
@@ -152,11 +176,31 @@ struct BankStatementCSVImportView: View {
 
                         Picker("Amount column", selection: $amountColumn) {
                             ForEach(columnIndices, id: \.self) { column in
-                                Text(columnLabel(for: column)).tag(column)
+                                Text(columnPickerLabel(for: column)).tag(column)
                             }
                         }
                         .pickerStyle(.menu)
                         .disabled(maxColumns == 0)
+
+                        Picker("Currency column", selection: $currencyColumn) {
+                            Text("Same as Amount").tag(-1)
+                            ForEach(columnIndices, id: \.self) { column in
+                                Text(columnPickerLabel(for: column)).tag(column)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .disabled(maxColumns == 0)
+                    }
+                }
+
+                GroupBox("Amount") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Picker("Decimal separator", selection: $decimalSeparator) {
+                            ForEach(DecimalSeparator.allCases) { option in
+                                Text(option.label).tag(option)
+                            }
+                        }
+                        .pickerStyle(.menu)
                     }
                 }
 
@@ -203,6 +247,20 @@ struct BankStatementCSVImportView: View {
     private var visibleColumns: [Int] {
         guard maxColumns > 0 else { return [] }
         return Array(0..<maxColumns)
+    }
+
+    private var previewColumns: [PreviewColumn] {
+        guard !visibleColumns.isEmpty else { return [] }
+        var columns = visibleColumns.map { PreviewColumn.data($0) }
+        if let amountIndex = columns.firstIndex(where: { column in
+            if case .data(let index) = column { return index == amountColumn }
+            return false
+        }) {
+            columns.insert(.parsedAmount, at: amountIndex + 1)
+        } else {
+            columns.append(.parsedAmount)
+        }
+        return columns
     }
 
     private var croppedRows: [[String]] {
@@ -261,8 +319,46 @@ struct BankStatementCSVImportView: View {
         return row[column]
     }
 
+    private func amountParseCell(for row: PreviewRow) -> some View {
+        let raw = cellValue(row: row.cells, column: amountColumn)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            return AnyView(Text("Missing").foregroundStyle(.secondary))
+        }
+
+        let parsed = parseAmountAndCurrency(from: raw, decimalSeparator: decimalSeparator)
+        guard let amount = parsed.amount else {
+            return AnyView(
+                Label("Invalid", systemImage: "exclamationmark.triangle.fill")
+                    .labelStyle(.titleAndIcon)
+                    .foregroundStyle(.orange)
+            )
+        }
+
+        let currency = resolveCurrency(from: currencyColumn, row: row.cells, fallback: parsed.currency)
+        let display = formatAmount(amount, currency: currency)
+        return AnyView(Text(display))
+    }
+
     private func columnLabel(for index: Int) -> String {
+        let mapping = selectedMappingLabel(for: index)
+        if mapping.isEmpty {
+            return "\(index + 1). Column"
+        }
+        return "\(index + 1). Column (\(mapping))"
+    }
+
+    private func columnPickerLabel(for index: Int) -> String {
         "\(index + 1). Column"
+    }
+
+    private func selectedMappingLabel(for index: Int) -> String {
+        var labels: [String] = []
+        if index == dateColumn { labels.append("Date") }
+        if index == referenceColumn { labels.append("Reference") }
+        if index == amountColumn { labels.append("Amount") }
+        if currencyColumn >= 0, index == currencyColumn { labels.append("Currency") }
+        return labels.joined(separator: ", ")
     }
 
     private func rangeControl(title: String, start: Binding<Int>, end: Binding<Int>, maxValue: Int) -> some View {
@@ -316,7 +412,9 @@ struct BankStatementCSVImportView: View {
             rowEnd = maxRowIndex
             dateColumn = 0
             referenceColumn = min(1, maxColumnIndex)
-            amountColumn = min(2, maxColumnIndex)
+            dateFormat = guessDateFormat(in: parsedRows) ?? dateFormat
+            amountColumn = guessAmountColumn(in: parsedRows) ?? min(2, maxColumnIndex)
+            currencyColumn = -1
             didSetInitialRanges = true
         }
         columnVersion += 1
@@ -340,7 +438,8 @@ struct BankStatementCSVImportView: View {
                 account: statement.account,
                 date: date,
                 reference: statement.reference,
-                amount: statement.amountString
+                amount: statement.amount,
+                currency: statement.currency
             )
         })
 
@@ -357,11 +456,19 @@ struct BankStatementCSVImportView: View {
                 continue
             }
 
+            let parsed = parseAmountAndCurrency(from: amount, decimalSeparator: decimalSeparator)
+            guard let amountValue = parsed.amount else {
+                continue
+            }
+
+            let currencyValue = resolveCurrency(from: currencyColumn, row: row, fallback: parsed.currency)
+
             let key = statementKey(
                 account: accountValue,
                 date: date,
                 reference: reference,
-                amount: amount
+                amount: amountValue,
+                currency: currencyValue
             )
             if existingKeys.contains(key) {
                 continue
@@ -371,7 +478,8 @@ struct BankStatementCSVImportView: View {
                 account: accountValue,
                 date: date,
                 reference: reference,
-                amountString: amount
+                amount: amountValue,
+                currency: currencyValue
             )
             modelContext.insert(statement)
             existingKeys.insert(key)
@@ -380,11 +488,64 @@ struct BankStatementCSVImportView: View {
         dismiss()
     }
 
-    private func statementKey(account: String?, date: Date, reference: String?, amount: String?) -> String {
+    private func statementKey(account: String?, date: Date, reference: String?, amount: Double?, currency: String?) -> String {
         let accountValue = account ?? ""
         let referenceValue = reference ?? ""
-        let amountValue = amount ?? ""
-        return "\(accountValue)|\(date.timeIntervalSinceReferenceDate)|\(referenceValue)|\(amountValue)"
+        let amountValue = amount.map { String(format: "%.6f", $0) } ?? ""
+        let currencyValue = currency ?? ""
+        return "\(accountValue)|\(date.timeIntervalSinceReferenceDate)|\(referenceValue)|\(amountValue)|\(currencyValue)"
+    }
+
+    private func parseAmountAndCurrency(from raw: String, decimalSeparator: DecimalSeparator) -> (amount: Double?, currency: String?) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return (nil, nil) }
+
+        let currency = extractCurrency(from: trimmed)
+        let normalized = normalizeAmountString(from: trimmed, decimalSeparator: decimalSeparator)
+        guard !normalized.isEmpty else { return (nil, currency) }
+        guard let value = Double(normalized) else { return (nil, currency) }
+
+        let negative = trimmed.contains("-")
+        let amount = negative ? -abs(value) : value
+        return (amount, currency)
+    }
+
+    private func extractCurrency(from raw: String) -> String? {
+        let symbols = raw.unicodeScalars.filter { "$€£¥".unicodeScalars.contains($0) }
+        let symbolText = String(String.UnicodeScalarView(symbols))
+        if !symbolText.isEmpty {
+            return symbolText
+        }
+
+        let letters = raw.unicodeScalars.filter { CharacterSet.letters.contains($0) }
+        let text = String(String.UnicodeScalarView(letters)).uppercased()
+        return text.isEmpty ? nil : text
+    }
+
+    private func normalizeAmountString(from raw: String, decimalSeparator: DecimalSeparator) -> String {
+        let allowed = CharacterSet(charactersIn: "0123456789" + decimalSeparator.rawValue)
+        let scalars = raw.unicodeScalars.filter { allowed.contains($0) }
+        var cleaned = String(String.UnicodeScalarView(scalars))
+        if decimalSeparator == .comma {
+            cleaned = cleaned.replacingOccurrences(of: ",", with: ".")
+        } else {
+            cleaned = cleaned.replacingOccurrences(of: ",", with: "")
+        }
+        return cleaned
+    }
+
+    private func formatAmount(_ amount: Double, currency: String?) -> String {
+        let formatted = amountFormatter.string(from: NSNumber(value: amount)) ?? amount.formatted()
+        guard let currency, !currency.isEmpty else { return formatted }
+        return "\(formatted) \(currency)"
+    }
+
+    private var amountFormatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter
     }
 
     private func normalizeRanges() {
@@ -394,6 +555,7 @@ struct BankStatementCSVImportView: View {
             dateColumn = 0
             referenceColumn = 0
             amountColumn = 0
+            currencyColumn = -1
             return
         }
 
@@ -404,6 +566,68 @@ struct BankStatementCSVImportView: View {
         dateColumn = min(max(dateColumn, 0), maxColumnIndex)
         referenceColumn = min(max(referenceColumn, 0), maxColumnIndex)
         amountColumn = min(max(amountColumn, 0), maxColumnIndex)
+        if currencyColumn >= 0 {
+            currencyColumn = min(max(currencyColumn, 0), maxColumnIndex)
+        }
+    }
+
+    private func guessAmountColumn(in rows: [[String]]) -> Int? {
+        guard maxColumns > 0 else { return nil }
+        let sampleRows = rows.prefix(50)
+        var best: (index: Int, parsed: Int, nonEmpty: Int)?
+
+        for index in 0..<maxColumns {
+            let cells = sampleRows.map { cellValue(row: $0, column: index).trimmingCharacters(in: .whitespacesAndNewlines) }
+            let filtered = cells.filter { !$0.isEmpty && $0.filter({ $0 == "." }).count <= 1 }
+            let parsed = filtered.filter { parseAmountAndCurrency(from: $0, decimalSeparator: decimalSeparator).amount != nil }.count
+            guard parsed > 0 else { continue }
+            let candidate = (index: index, parsed: parsed, nonEmpty: filtered.count)
+            if let current = best {
+                if candidate.parsed > current.parsed || (candidate.parsed == current.parsed && candidate.nonEmpty > current.nonEmpty) {
+                    best = candidate
+                }
+            } else {
+                best = candidate
+            }
+        }
+
+        return best?.index
+    }
+
+    private func guessDateFormat(in rows: [[String]]) -> String? {
+        let formats = [
+            "yyyy-MM-dd",
+            "dd.MM.yyyy",
+            "MM/dd/yyyy",
+            "dd/MM/yyyy",
+            "yyyy/MM/dd",
+            "dd-MM-yyyy",
+            "MM-dd-yyyy"
+        ]
+        let sampleRows = rows.prefix(50)
+        let values = sampleRows
+            .map { cellValue(row: $0, column: dateColumn).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !values.isEmpty else { return nil }
+
+        var best: (format: String, matches: Int)?
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+
+        for format in formats {
+            formatter.dateFormat = format
+            let matches = values.filter { formatter.date(from: $0) != nil }.count
+            guard matches > 0 else { continue }
+            if let current = best {
+                if matches > current.matches {
+                    best = (format, matches)
+                }
+            } else {
+                best = (format, matches)
+            }
+        }
+
+        return best?.format
     }
 
     private func tokens(from string: String) -> [String] {
@@ -428,6 +652,14 @@ struct BankStatementCSVImportView: View {
         return sanitized
     }
 
+    private func resolveCurrency(from column: Int, row: [String], fallback: String?) -> String? {
+        guard column >= 0 else { return fallback }
+        let raw = cellValue(row: row, column: column)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else { return fallback }
+        return extractCurrency(from: raw) ?? fallback
+    }
+
     private var normalizedBlacklist: [String] {
         blacklistTokens.map { $0.lowercased() }
     }
@@ -447,6 +679,11 @@ private struct PreviewRow: Identifiable {
     let id: Int
     let cells: [String]
     let isBlacklisted: Bool
+}
+
+private enum PreviewColumn: Hashable {
+    case data(Int)
+    case parsedAmount
 }
 
 private enum CSVDelimiter: String, CaseIterable, Identifiable {

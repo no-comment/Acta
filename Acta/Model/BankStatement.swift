@@ -7,24 +7,28 @@ final class BankStatement {
     var account: String?
     var date: Date?
     var reference: String?
-    var amountString: String?
+    var amount: Double?
+    var currency: String?
     var notes: String = ""
     
     var matchedInvoice: Invoice?
     
-    init(account: String?, date: Date, reference: String, amountString: String, notes: String = "") {
+    init(account: String?, date: Date, reference: String, amount: Double?, currency: String? = nil, notes: String = "") {
         self.account = account
         self.date = date
         self.reference = reference
-        self.amountString = amountString
+        self.amount = amount
+        self.currency = currency
         self.notes = notes
     }
 }
 
 extension BankStatement {
-    var amount: Double {
-        // TODO: Calculate Amount
-        return 0
+    var amountDisplay: String? {
+        guard let amount else { return nil }
+        let formatted = BankStatement.amountFormatter.string(from: NSNumber(value: amount)) ?? amount.formatted()
+        guard let currency, !currency.isEmpty else { return formatted }
+        return "\(formatted) \(currency)"
     }
     
     var linkedFilePath: String? {
@@ -44,6 +48,14 @@ extension BankStatement {
         
         return .unlinked
     }
+
+    private static let amountFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter
+    }()
 }
 
 extension BankStatement {
@@ -88,7 +100,7 @@ extension BankStatement {
 //        guard let nocommentTag = allTags?.first(where: { $0.title == "no-comment" }) else { return }
 //        guard let privateTag = allTags?.first(where: { $0.title == "private" }) else { return }
                 
-        let statement1 = BankStatement(account: "N26", date: Date.now, reference: "Apple Inc.; APPLE DEVELOPER 1 YEAR; CAMERON SHEMILT", amountString: "341,37 $", notes: "Apple Developer Licence")
+        let statement1 = BankStatement(account: "N26", date: Date.now, reference: "Apple Inc.; APPLE DEVELOPER 1 YEAR; CAMERON SHEMILT", amount: 341.37, currency: "$", notes: "Apple Developer Licence")
                 
         modelContext.insert(statement1)
     }

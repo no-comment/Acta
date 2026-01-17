@@ -97,7 +97,11 @@ struct BankStatementsView: View {
             }
             .customizationID("date")
             
-            TableColumn("Amount", value: \.amountString)
+            TableColumn("Amount") { statement in
+                Text(statement.amountDisplay ?? "N/A")
+                    .monospacedDigit()
+            }
+            .alignment(.trailing)
                 .customizationID("amount")
             TableColumn("Reference", value: \.reference)
                 .customizationID("reference")
