@@ -3,7 +3,6 @@ import SwiftData
 
 @Model
 final class BankStatement {
-    @Attribute(.renamingIdentifier("bank"))
     var account: String?
     var date: Date?
     var reference: String?
