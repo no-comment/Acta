@@ -231,6 +231,7 @@ final class OCRManager {
         \(userContext)
         If a field is not present, return null. Use ISO 8601 dates (YYYY-MM-DD).
         Return taxPercentage as a decimal fraction (e.g., 0.07 for 7%).
+        For currency, prefer a symbol (e.g., $ or €) rather than a currency code.
         """
 
         let responseSchema: [String: Any] = [

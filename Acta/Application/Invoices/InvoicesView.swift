@@ -123,7 +123,9 @@ struct InvoicesView: View {
             
             TableColumn("Total") { invoice in
                 Text(invoice.getPostTaxAmountString())
+                    .monospacedDigit()
             }
+            .alignment(.trailing)
             .customizationID("totalAmount")
             
             TableColumnForEach(tagGroups) { group in
