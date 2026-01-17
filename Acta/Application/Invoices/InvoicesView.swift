@@ -69,7 +69,7 @@ struct InvoicesView: View {
                 .customizationID("vendorName")
             
             TableColumn("Date") { invoice in
-                Text(invoice.date?.formatted() ?? "N/A")
+                Text(invoice.date?.formatted(date: .numeric, time: .omitted) ?? "N/A")
             }
             .customizationID("invoiceDate")
             
@@ -110,7 +110,9 @@ struct InvoicesView: View {
             }
         }
         .contextMenu(forSelectionType: Invoice.ID.self) { items in
-
+            Button("Rescan Invoice", systemImage: "text.viewfinder", action: {})
+            Button("Delete Invoice", systemImage: "trash", role: .destructive, action: {})
+                .tint(.red)
         } primaryAction: { items in
             guard let invoiceID = items.first else { return }
             openWindow(value: invoiceID)
@@ -120,38 +122,9 @@ struct InvoicesView: View {
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem {
-            Button("Delete All", systemImage: "trash", role: .destructive, action: {
-                for invoice in invoices {
-                    modelContext.delete(invoice)
-                }
-                
-                for group in tagGroups {
-                    modelContext.delete(group)
-                }
-                
-                for tag in tags {
-                    modelContext.delete(tag)
-                }
-            })
-        }
-        
-        ToolbarItem {
-            Button("Generate Mock", systemImage: "plus", role: .none, action: {
-                TagGroup.generateMockData(modelContext: modelContext)
-                Tag.generateMockData(modelContext: modelContext)
-                Invoice.generateMockData(modelContext: modelContext)
-            })
-        }
-        
-        ToolbarItem {
-            Button("Count", systemImage: "questionmark", role: .none, action: {
-                print("Invoices: \(invoices.count), TagGroups: \(tagGroups.count), Tags: \(tags.count)")
-            })
-        }
-        
-        ToolbarItem {
             Button("OCR All New", systemImage: "doc.text.viewfinder", action: processAllNewInvoices)
                 .disabled(newInvoices.isEmpty || isProcessingOCR || documentManager == nil)
+                .help("Scan Unscanned Invoices")
         }
         
         ToolbarItem {
@@ -159,6 +132,7 @@ struct InvoicesView: View {
                 NotificationCenter.default.post(name: .importInvoice, object: nil)
             }
             .disabled(documentManager == nil)
+            .help("Import Invoices")
         }
 
         ToolbarItem {
@@ -166,6 +140,7 @@ struct InvoicesView: View {
                 openWindow(id: "invoice-review")
             }
             .disabled(unreviewedInvoices.isEmpty)
+            .help("Open Invoice Review")
         }
     }
     

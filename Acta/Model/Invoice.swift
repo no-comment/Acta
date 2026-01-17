@@ -77,15 +77,15 @@ extension Invoice {
 
         var iconName: String {
             switch self {
-            case .new: return "circle"
-            case .processed: return "circle.inset.filled"
+            case .new: return "viewfinder.trianglebadge.exclamationmark"
+            case .processed: return "circle"
             case .verified: return "checkmark.circle.fill"
             }
         }
 
         var label: String {
             switch self {
-            case .new: return "New"
+            case .new: return "Unscanned"
             case .processed: return "Processed"
             case .verified: return "Verified"
             }

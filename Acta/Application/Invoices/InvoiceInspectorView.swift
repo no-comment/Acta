@@ -14,7 +14,7 @@ struct InvoiceInspectorView: View {
             VStack(spacing: 0) {
                 Divider()
                 HStack(spacing: 0) {
-                    Button("Close", action: onClose)
+                    Button("Close", role: .close, action: onClose)
                         .buttonStyle(.bordered)
                     Spacer(minLength: 0)
                 }

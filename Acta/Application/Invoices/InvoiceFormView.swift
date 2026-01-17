@@ -28,15 +28,14 @@ struct InvoiceFormView: View {
     private var generalSection: some View {
         VStack(spacing: 10) {
             Labeled("File Path") {
-                HStack(spacing: 2) {
+                HStack(spacing: 6) {
                     if let path = invoice.path, !path.isEmpty {
                         Text(path)
+                            .lineLimit(1)
                     } else {
-                        Text("No file associated with this entry.")
+                        Text("No document associated with this entry.")
                             .italic()
                     }
-                    
-                    Spacer(minLength: 0)
                     
                     if let url = documentURL {
                         Button {
@@ -52,6 +51,7 @@ struct InvoiceFormView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 2)
             }
             
             Labeled("Vendor Name") {
