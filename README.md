@@ -2,8 +2,6 @@
 
 A macOS app for matching invoices with bank statements. Acta streamlines accounting reconciliation by automatically linking your invoices to corresponding bank transactions.
 
-## Overview
-
 Acta helps you:
 1. **Import invoices** (PDF or images)
 2. **Import bank statements** (CSV files)
