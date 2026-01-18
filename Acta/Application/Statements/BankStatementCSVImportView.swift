@@ -53,7 +53,7 @@ struct BankStatementCSVImportView: View {
         .frame(minWidth: 1000, minHeight: 640)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Close") {
+                Button("Cancel") {
                     dismiss()
                 }
             }

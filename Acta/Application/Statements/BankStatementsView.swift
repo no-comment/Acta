@@ -14,6 +14,7 @@ struct BankStatementsView: View {
     
     @State private var isTargeted = false
     @State private var importURL: URL?
+    @State private var showExport = false
     @State private var errorMessage: String?
     @State private var showError = false
 
@@ -134,6 +135,9 @@ struct BankStatementsView: View {
                     BankStatementCSVImportView(url: importURL)
                 }
             }
+            .sheet(isPresented: $showExport) {
+                BankStatementCSVExportView()
+            }
             .alert("Import Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -220,6 +224,11 @@ struct BankStatementsView: View {
                 openWindow(id: "link-review")
             }
             .disabled(unapprovedLinkedStatements.isEmpty)
+
+            Button("Export Linked", systemImage: "square.and.arrow.up") {
+                showExport = true
+            }
+            .disabled(!statements.contains { $0.matchedInvoice != nil })
         }
         
         ToolbarItemGroup(placement: .principal) {
