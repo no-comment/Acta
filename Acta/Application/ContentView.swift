@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage(DefaultKey.isNewUser) private var isNewUser: Bool = true
     @SceneStorage("ActiveMainView") private var mainView: ActaApp.MainView = .invoices
     
     @Environment(\.modelContext) private var modelContext
@@ -11,6 +12,7 @@ struct ContentView: View {
     var body: some View {
         content
             .navigationTitle("")
+            .sheet(isPresented: self.$isNewUser, content: { OnboardingView() })
             .toolbar {
                 ToolbarItem(placement: .navigation) {
                     Menu(mainView.title) {
