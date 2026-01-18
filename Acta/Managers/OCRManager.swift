@@ -412,7 +412,7 @@ final class OCRManager {
 
 extension OCRManager {
     static func loadUserDisplayName() -> String? {
-        guard let value = UserDefaults.standard.string(forKey: SettingsKeys.userDisplayName) else {
+        guard let value = UserDefaults.standard.string(forKey: DefaultKey.userDisplayName) else {
             return nil
         }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)

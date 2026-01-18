@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct ValueColorModifier: ViewModifier {
-    @AppStorage(SettingsKeys.colorNegativeRed) private var colorNegativeRed: Bool = false
-    @AppStorage(SettingsKeys.colorPositiveGreen) private var colorPositiveGreen: Bool = false
+    @AppStorage(DefaultKey.colorNegativeRed) private var colorNegativeRed: Bool = false
+    @AppStorage(DefaultKey.colorPositiveGreen) private var colorPositiveGreen: Bool = false
     let isNegative: Bool
 
     func body(content: Content) -> some View {

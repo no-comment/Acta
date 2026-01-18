@@ -23,7 +23,7 @@ struct BankStatementCSVImportView: View {
     @State private var accountName = ""
     @State private var decimalSeparator: DecimalSeparator = .comma
 
-    @AppStorage("BankStatementImportBlacklist") private var blacklistDefaultsString = ""
+    @AppStorage(DefaultKey.bankStatementBlacklist) private var blacklistDefaultsString = ""
     @State private var blacklistTokens: [String] = []
 
     @State private var errorMessage: String?
