@@ -17,5 +17,9 @@
 	<array>
 		<string>iCloud.xyz.no-comment.Acta</string>
 	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)xyz.no-comment.Acta</string>
+	</array>
 </dict>
 </plist>
