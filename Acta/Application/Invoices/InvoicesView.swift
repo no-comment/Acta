@@ -41,6 +41,15 @@ struct InvoicesView: View {
     private var sortedInvoices: [Invoice] {
         invoices.sorted(using: sortOrder)
     }
+
+    @ViewBuilder
+    private var content: some View {
+        if invoices.isEmpty {
+            ContentUnavailableView("No Invoices", systemImage: "doc.text", description: Text("Drop PDF files to import your first invoice"))
+        } else {
+            table
+        }
+    }
     
     private var newInvoices: [Invoice] {
         invoices.filter { $0.status == .new }
@@ -59,7 +68,7 @@ struct InvoicesView: View {
     }
 
     var body: some View {
-        table
+        content
             .toolbar(content: { self.toolbar })
             .inspector(isPresented: showInspector, content: {
                 if let selectedInvoice {
