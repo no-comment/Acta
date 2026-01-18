@@ -25,18 +25,18 @@ struct InvoiceImporterModifier: ViewModifier {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var importTask: Task<Void, Never>?
-    
+
     // Duplicate detection state
-    @State private var pendingImportURL: URL?
-    @State private var duplicateDocument: DocumentFile?
+    @State private var pendingImportURLs: [URL] = []
+    @State private var duplicateCount = 0
     @State private var showDuplicateAlert = false
-    
+
     func body(content: Content) -> some View {
         content
             .fileImporter(
                 isPresented: $isPresented,
                 allowedContentTypes: DocumentManager.invoiceContentTypes,
-                allowsMultipleSelection: false
+                allowsMultipleSelection: true
             ) { result in
                 handleFileImport(result)
             }
@@ -45,50 +45,58 @@ struct InvoiceImporterModifier: ViewModifier {
             } message: {
                 Text(errorMessage ?? "Unknown error")
             }
-            .alert("Duplicate File", isPresented: $showDuplicateAlert) {
-                Button("Import Anyway") {
-                    if let url = pendingImportURL {
-                        performImport(url: url)
-                    }
+            .alert("Duplicate Files", isPresented: $showDuplicateAlert) {
+                Button("Add Anyway") {
+                    performImport(urls: pendingImportURLs)
                 }
-                Button("Cancel", role: .cancel) {
-                    pendingImportURL = nil
-                    duplicateDocument = nil
+                Button("Skip", role: .cancel) {
+                    pendingImportURLs = []
+                    duplicateCount = 0
                 }
             } message: {
-                if let duplicate = duplicateDocument {
-                    Text("This file appears to be identical to '\(duplicate.displayName)'. Do you still want to import it?")
+                if duplicateCount == 1 {
+                    Text("1 file appears to be a duplicate. Do you still want to import it?")
                 } else {
-                    Text("This file already exists. Do you still want to import it?")
+                    Text("\(duplicateCount) files appear to be duplicates. Do you still want to import them?")
                 }
             }
             .onDisappear {
                 importTask?.cancel()
             }
     }
-    
+
     private func handleFileImport(_ result: Result<[URL], Error>) {
         guard let documentManager else {
             errorMessage = "iCloud is not available"
             showError = true
             return
         }
-        
+
         importTask?.cancel()
-        
+
         importTask = Task { @MainActor in
             do {
-                guard let url = try result.get().first else { return }
-                
-                // Check for duplicates first
-                if let duplicate = try documentManager.findDuplicate(of: url, type: .invoice) {
-                    pendingImportURL = url
-                    duplicateDocument = duplicate
-                    showDuplicateAlert = true
-                } else {
+                let urls = try result.get()
+                guard !urls.isEmpty else { return }
+
+                var duplicates: [URL] = []
+
+                for url in urls {
+                    // Check for duplicates first
+                    if try documentManager.findDuplicate(of: url, type: .invoice) != nil {
+                        duplicates.append(url)
+                    } else {
                         let document = try await documentManager.importInvoice(url: url)
                         createInvoiceRecord(for: document)
                     }
+                }
+
+                // Show duplicate alert if any duplicates were found
+                if !duplicates.isEmpty {
+                    pendingImportURLs = duplicates
+                    duplicateCount = duplicates.count
+                    showDuplicateAlert = true
+                }
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
@@ -96,28 +104,30 @@ struct InvoiceImporterModifier: ViewModifier {
         }
     }
     
-    private func performImport(url: URL) {
+    private func performImport(urls: [URL]) {
         guard let documentManager else {
             errorMessage = "iCloud is not available"
             showError = true
             return
         }
-        
+
         importTask?.cancel()
-        
+
         importTask = Task { @MainActor in
             do {
-                let document = try await documentManager.importInvoice(url: url)
-                createInvoiceRecord(for: document)
+                for url in urls {
+                    let document = try await documentManager.importInvoice(url: url)
+                    createInvoiceRecord(for: document)
+                }
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
             }
-            pendingImportURL = nil
-            duplicateDocument = nil
+            pendingImportURLs = []
+            duplicateCount = 0
         }
     }
-    
+
     private func createInvoiceRecord(for document: DocumentFile) {
         let filename = document.filename
         let descriptor = FetchDescriptor<Invoice>(
@@ -167,24 +177,24 @@ extension View {
 /// ```
 struct InvoiceDropImporterModifier: ViewModifier {
     @Environment(\.modelContext) private var modelContext
-    
+
     let documentManager: DocumentManager?
-    
+
     @State private var isTargeted = false
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var importTask: Task<Void, Never>?
-    
+
     // Duplicate detection state
-    @State private var pendingImportURL: URL?
-    @State private var duplicateDocument: DocumentFile?
+    @State private var pendingImportURLs: [URL] = []
+    @State private var duplicateCount = 0
     @State private var showDuplicateAlert = false
     
     func body(content: Content) -> some View {
         content
             .dropDestination(for: URL.self) { urls, _ in
-                guard let url = urls.first, documentManager != nil else { return false }
-                handleDroppedFile(url: url)
+                guard !urls.isEmpty, documentManager != nil else { return false }
+                handleDroppedFiles(urls: urls)
                 return true
             } isTargeted: { targeted in
                 isTargeted = targeted
@@ -199,21 +209,19 @@ struct InvoiceDropImporterModifier: ViewModifier {
             } message: {
                 Text(errorMessage ?? "Unknown error")
             }
-            .alert("Duplicate File", isPresented: $showDuplicateAlert) {
-                Button("Import Anyway") {
-                    if let url = pendingImportURL {
-                        performImport(url: url)
-                    }
+            .alert("Duplicate Files", isPresented: $showDuplicateAlert) {
+                Button("Add Anyway") {
+                    performImport(urls: pendingImportURLs)
                 }
-                Button("Cancel", role: .cancel) {
-                    pendingImportURL = nil
-                    duplicateDocument = nil
+                Button("Skip", role: .cancel) {
+                    pendingImportURLs = []
+                    duplicateCount = 0
                 }
             } message: {
-                if let duplicate = duplicateDocument {
-                    Text("This file appears to be identical to '\(duplicate.displayName)'. Do you still want to import it?")
+                if duplicateCount == 1 {
+                    Text("1 file appears to be a duplicate. Do you still want to import it?")
                 } else {
-                    Text("This file already exists. Do you still want to import it?")
+                    Text("\(duplicateCount) files appear to be duplicates. Do you still want to import them?")
                 }
             }
             .onDisappear {
@@ -235,33 +243,46 @@ struct InvoiceDropImporterModifier: ViewModifier {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
-    private func handleDroppedFile(url: URL) {
+    private func handleDroppedFiles(urls: [URL]) {
         guard let documentManager else {
             errorMessage = "iCloud is not available"
             showError = true
             return
         }
-        
-        // Validate file type
-        guard let uti = UTType(filenameExtension: url.pathExtension),
-              DocumentManager.invoiceContentTypes.contains(where: { uti.conforms(to: $0) }) else {
+
+        // Filter to valid file types
+        let validURLs = urls.filter { url in
+            guard let uti = UTType(filenameExtension: url.pathExtension) else { return false }
+            return DocumentManager.invoiceContentTypes.contains(where: { uti.conforms(to: $0) })
+        }
+
+        guard !validURLs.isEmpty else {
             errorMessage = "Only PDF and image files can be imported"
             showError = true
             return
         }
-        
+
         importTask?.cancel()
-        
+
         importTask = Task { @MainActor in
             do {
-                // Check for duplicates first
-                if let duplicate = try documentManager.findDuplicate(of: url, type: .invoice) {
-                    pendingImportURL = url
-                    duplicateDocument = duplicate
+                var duplicates: [URL] = []
+
+                for url in validURLs {
+                    // Check for duplicates first
+                    if try documentManager.findDuplicate(of: url, type: .invoice) != nil {
+                        duplicates.append(url)
+                    } else {
+                        let document = try await documentManager.importInvoice(url: url)
+                        createInvoiceRecord(for: document)
+                    }
+                }
+
+                // Show duplicate alert if any duplicates were found
+                if !duplicates.isEmpty {
+                    pendingImportURLs = duplicates
+                    duplicateCount = duplicates.count
                     showDuplicateAlert = true
-                } else {
-                    let document = try await documentManager.importInvoice(url: url)
-                    createInvoiceRecord(for: document)
                 }
             } catch {
                 errorMessage = error.localizedDescription
@@ -269,26 +290,28 @@ struct InvoiceDropImporterModifier: ViewModifier {
             }
         }
     }
-    
-    private func performImport(url: URL) {
+
+    private func performImport(urls: [URL]) {
         guard let documentManager else {
             errorMessage = "iCloud is not available"
             showError = true
             return
         }
-        
+
         importTask?.cancel()
-        
+
         importTask = Task { @MainActor in
             do {
-                let document = try await documentManager.importInvoice(url: url)
-                createInvoiceRecord(for: document)
+                for url in urls {
+                    let document = try await documentManager.importInvoice(url: url)
+                    createInvoiceRecord(for: document)
+                }
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
             }
-            pendingImportURL = nil
-            duplicateDocument = nil
+            pendingImportURLs = []
+            duplicateCount = 0
         }
     }
     
