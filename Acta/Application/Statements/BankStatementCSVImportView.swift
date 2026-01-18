@@ -23,8 +23,7 @@ struct BankStatementCSVImportView: View {
     @State private var accountName = ""
     @State private var decimalSeparator: DecimalSeparator = .comma
 
-    @AppStorage(DefaultKey.bankStatementBlacklist) private var blacklistDefaultsString = ""
-    @State private var blacklistTokens: [String] = []
+    @AppStorage(DefaultKey.bankStatementBlacklist) private var blacklistTokens: [String] = []
 
     @State private var errorMessage: String?
     @State private var showError = false
@@ -68,11 +67,14 @@ struct BankStatementCSVImportView: View {
                     saveStatements()
                 }
                 .disabled(filteredRows.isEmpty)
+                .keyboardShortcut("s", modifiers: [.command])
+                .buttonStyle(.borderedProminent)
+                .tint(.accentColor)
             }
         }
         .onAppear {
             loadFile()
-            blacklistTokens = sanitizeBlacklist(tokens(from: blacklistDefaultsString))
+            blacklistTokens = sanitizeBlacklist(blacklistTokens)
         }
         .onChange(of: delimiter) { _, _ in
             parse()
@@ -83,7 +85,6 @@ struct BankStatementCSVImportView: View {
                 blacklistTokens = sanitized
                 return
             }
-            blacklistDefaultsString = sanitized.joined(separator: ",")
         }
         .alert("CSV Import Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
@@ -255,9 +256,12 @@ struct BankStatementCSVImportView: View {
 
                 GroupBox("Blacklist") {
                     VStack(alignment: .leading, spacing: 8) {
-                        TokenFieldView(tokens: $blacklistTokens, placeholder: "Comma separated tokens")
+                        TokenFieldView(
+                            tokens: $blacklistTokens,
+                            placeholder: "Press Enter to add a token"
+                        )
 
-                        Text("Ignore rows whose reference or vendor contains any of these comma separated tokens.")
+                        Text("Ignore rows whose reference or vendor contains any of these tokens.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -688,12 +692,6 @@ struct BankStatementCSVImportView: View {
         }
 
         return best?.format
-    }
-
-    private func tokens(from string: String) -> [String] {
-        string
-            .split(separator: ",", omittingEmptySubsequences: true)
-            .map { String($0) }
     }
 
     private func sanitizeBlacklist(_ tokens: [String]) -> [String] {

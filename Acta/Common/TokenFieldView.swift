@@ -11,15 +11,18 @@ struct TokenFieldView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             TextField(placeholder, text: $input)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    commitInput(input, keepRemainder: false)
+            .textFieldStyle(.roundedBorder)
+            .onSubmit {
+                input = commitInput(input, keepRemainder: false)
+                DispatchQueue.main.async {
+                    input = ""
                 }
-                .onChange(of: input) { _, newValue in
-                    if newValue.contains(",") || newValue.contains("\n") {
-                        commitInput(newValue, keepRemainder: true)
-                    }
+            }
+            .onChange(of: input) { _, newValue in
+                if newValue.contains("\n") {
+                    input = commitInput(newValue, keepRemainder: true)
                 }
+            }
 
             WrappingTagLayout(
                 alignment: .leading,
@@ -35,14 +38,14 @@ struct TokenFieldView: View {
         }
     }
 
-    private func commitInput(_ raw: String, keepRemainder: Bool) {
-        let rawParts = raw.split(whereSeparator: { $0 == "," || $0.isNewline })
-        guard !rawParts.isEmpty else { return }
+    private func commitInput(_ raw: String, keepRemainder: Bool) -> String {
+        let rawParts = raw.split(whereSeparator: { $0.isNewline })
+        guard !rawParts.isEmpty else { return raw }
         var parts = rawParts.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         var remainder = ""
 
-        if keepRemainder, let last = parts.last, !raw.hasSuffix(",") && !raw.hasSuffix("\n") {
+        if keepRemainder, let last = parts.last, !raw.hasSuffix("\n") {
             remainder = last
             parts.removeLast()
         }
@@ -50,7 +53,7 @@ struct TokenFieldView: View {
         if !parts.isEmpty {
             tokens.append(contentsOf: parts)
         }
-        input = remainder
+        return remainder
     }
 
     private func removeToken(_ token: String) {
