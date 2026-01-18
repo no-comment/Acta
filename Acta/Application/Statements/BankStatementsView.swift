@@ -125,7 +125,7 @@ struct BankStatementsView: View {
     @ToolbarContentBuilder
     private func toolbar() -> some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
-            Button("Auto Link", systemImage: "link") {
+            Button("Auto Link", systemImage: "wand.and.stars") {
                 BankStatementMatcher.autoLink(modelContext: modelContext)
             }
         }
