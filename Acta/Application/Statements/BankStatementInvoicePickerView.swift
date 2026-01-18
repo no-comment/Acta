@@ -34,10 +34,7 @@ struct BankStatementInvoicePickerView: View {
                 invoiceSection
             }
             .navigationTitle("Bank Statement & Invoice Matching")
-            .onChange(of: selectedInvoice) { oldValue, newValue in
-                guard let newValue else { return }
-                statement.matchedInvoice = newValue
-            }
+            .toolbar(content: toolbar)
             .onAppear(perform: { self.selection = statement.matchedInvoice?.id})
         } else {
             ContentUnavailableView("Bank Statement Not Found", systemImage: "doc.questionmark")
@@ -133,6 +130,25 @@ struct BankStatementInvoicePickerView: View {
             .customizationID("filename")
             .defaultVisibility(.hidden)
         }
+    }
+    
+    @ToolbarContentBuilder
+    private func toolbar() -> some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Button("Link & Verify", image: .linkBadgeCheckmark, action: confirmLink)
+                .keyboardShortcut(.return, modifiers: .command)
+                .help("Link & Verify")
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+                .disabled(self.selectedInvoice == nil || self.statement == nil)
+        }
+    }
+    
+    private func confirmLink() {
+        guard let selectedInvoice, let statement else { return }
+        
+        statement.matchedInvoice = selectedInvoice
+        selectedInvoice.status = .statementVerified
     }
 }
 
