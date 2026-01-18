@@ -66,6 +66,7 @@ struct BankStatementInvoicePickerView: View {
                 Labeled("Amount") {
                     Text(statement.amountDisplay ?? "N/A")
                         .fontDesign(.monospaced)
+                        .valueColor(for: statement.amount)
                 }
                 
                 Labeled("Reference") {
@@ -102,6 +103,7 @@ struct BankStatementInvoicePickerView: View {
             TableColumn("Pre Tax", value: \.preTaxAmount) { invoice in
                 Text(invoice.getPreTaxAmountString())
                     .monospacedDigit()
+                    .valueColor(isNegative: invoice.direction == .incoming)
             }
             .alignment(.trailing)
             .customizationID("preTaxAmount")
@@ -118,6 +120,7 @@ struct BankStatementInvoicePickerView: View {
             TableColumn("Total", value: \.totalAmount) { invoice in
                 Text(invoice.getPostTaxAmountString())
                     .monospacedDigit()
+                    .valueColor(isNegative: invoice.direction == .incoming)
             }
             .alignment(.trailing)
             .customizationID("totalAmount")

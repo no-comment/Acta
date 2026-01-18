@@ -51,7 +51,7 @@ extension Invoice {
     func getPreTaxAmountString() -> String {
         guard var amount = preTaxAmount else { return "" }
 
-        if self.direction == .outgoing {
+        if self.direction == .incoming {
             amount.negate()
         }
         
@@ -63,7 +63,7 @@ extension Invoice {
     func getPostTaxAmountString() -> String {
         guard var amount = totalAmount else { return "" }
 
-        if self.direction == .outgoing {
+        if self.direction == .incoming {
             amount.negate()
         }
         

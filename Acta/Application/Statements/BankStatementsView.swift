@@ -168,6 +168,7 @@ struct BankStatementsView: View {
             TableColumn("Amount", value: \.amountDisplay) { statement in
                 Text(statement.amountDisplay ?? "")
                     .monospacedDigit()
+                    .valueColor(for: statement.amount)
             }
             .alignment(.trailing)
             .customizationID("amount")
@@ -201,6 +202,7 @@ struct BankStatementsView: View {
             Button("Auto Link", systemImage: "wand.and.stars") {
                 BankStatementMatcher.autoLink(modelContext: modelContext)
             }
+            .help("Auto Link")
         }
         
         ToolbarItemGroup(placement: .principal) {

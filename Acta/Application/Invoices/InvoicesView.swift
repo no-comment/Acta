@@ -195,6 +195,7 @@ struct InvoicesView: View {
             TableColumn("Pre Tax", value: \.preTaxAmount) { invoice in
                 Text(invoice.getPreTaxAmountString())
                     .monospacedDigit()
+                    .valueColor(isNegative: invoice.direction == .incoming)
             }
             .alignment(.trailing)
             .customizationID("preTaxAmount")
@@ -211,6 +212,7 @@ struct InvoicesView: View {
             TableColumn("Total", value: \.totalAmount) { invoice in
                 Text(invoice.getPostTaxAmountString())
                     .monospacedDigit()
+                    .valueColor(isNegative: invoice.direction == .incoming)
             }
             .alignment(.trailing)
             .customizationID("totalAmount")

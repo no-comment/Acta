@@ -4,10 +4,17 @@ struct SettingsView: View {
     @State private var openRouterKey: String = ""
     @State private var statusMessage: String?
     @State private var isSaving = false
-    @AppStorage(SettingsKeys.userDisplayName) private var userDisplayName = ""
+    @AppStorage(SettingsKeys.userDisplayName) private var userDisplayName: String = ""
+    @AppStorage(SettingsKeys.colorNegativeRed) private var colorNegativeRed: Bool = false
+    @AppStorage(SettingsKeys.colorPositiveGreen) private var colorPositiveGreen: Bool = false
 
     var body: some View {
         Form {
+            Section("General") {
+                Toggle("Color Negative Values Red", isOn: $colorNegativeRed)
+                Toggle("Color Positive Values Green", isOn: $colorPositiveGreen)
+            }
+            
             Section("Identity") {
                 TextField("Your name or company", text: $userDisplayName)
 
