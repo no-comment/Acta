@@ -1,14 +1,14 @@
 import SwiftUI
 import Foundation
 
-extension TableColumn where RowValue: Identifiable, Sort == Never, Content == Text, Label == Text {
-    init(
-        _ titleKey: LocalizedStringKey,
-        value: KeyPath<RowValue, String?>
-    ) {
-        self.init(titleKey) { rowValue in
-            Text(rowValue[keyPath: value] ?? "N/A")
+// MARK: - Comparable Optionals
+// Used for Table sorting
+extension Optional: @retroactive Comparable where Wrapped: Comparable {
+    public static func < (lhs: Wrapped?, rhs: Wrapped?) -> Bool {
+        if let lhs, let rhs {
+            return lhs < rhs
         }
+        return lhs == nil && rhs != nil
     }
 }
 
@@ -44,5 +44,15 @@ extension Binding where Value == Date? {
             get: { self.wrappedValue ?? .distantPast },
             set: { self.wrappedValue = $0 == .distantPast ? nil : $0 }
         )
+    }
+}
+
+// MARK: - Other
+extension FormatStyle where Self == Date.FormatStyle {
+    static var fixedWidthDate: Date.FormatStyle {
+        Date.FormatStyle()
+            .year(.defaultDigits)
+            .month(.twoDigits)
+            .day(.twoDigits)
     }
 }

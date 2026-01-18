@@ -49,29 +49,31 @@ extension Invoice {
     }
 
     func getPreTaxAmountString() -> String {
-        guard var amount = preTaxAmount else { return "N/A" }
-        guard let currency else { return "N/A" }
+        guard var amount = preTaxAmount else { return "" }
 
         if self.direction == .outgoing {
             amount.negate()
         }
+        
+        guard let currency else { return amount.formatted(.number) }
 
         return formatAmount(amount, currency: currency)
     }
 
     func getPostTaxAmountString() -> String {
-        guard var amount = totalAmount else { return "N/A" }
-        guard let currency else { return "N/A" }
+        guard var amount = totalAmount else { return "" }
 
         if self.direction == .outgoing {
             amount.negate()
         }
+        
+        guard let currency else { return amount.formatted(.number) }
 
         return formatAmount(amount, currency: currency)
     }
 
     func getTaxPercentage() -> String {
-        guard let taxPercentage else { return "N/A" }
+        guard let taxPercentage else { return "" }
         return taxPercentage.formatted(.percent)
     }
 

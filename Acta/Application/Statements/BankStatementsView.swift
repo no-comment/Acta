@@ -81,33 +81,40 @@ struct BankStatementsView: View {
     
     private var table: some View {
         Table(self.sortedStatements, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
-            TableColumn("") { statement in
+            TableColumn("", value: \.status) { statement in
                 statement.status.icon
                     .help(statement.status.label)
             }
-            .width(16)
+            .width(14)
             .disabledCustomizationBehavior(.all)
             .customizationID("status")
             
-            TableColumn("Account", value: \.account)
-                .customizationID("accountName")
+            TableColumn("Account", value: \.account) { statement in
+                Text(statement.account ?? "")
+            }
+            .customizationID("accountName")
             
-            TableColumn("Date") { statement in
-                Text(statement.date?.formatted(date: .numeric, time: .omitted) ?? "N/A")
+            TableColumn("Date", value: \.date) { statement in
+                Text(statement.date?.formatted(.fixedWidthDate) ?? "N/A")
             }
             .customizationID("date")
             
-            TableColumn("Amount") { statement in
-                Text(statement.amountDisplay ?? "N/A")
+            TableColumn("Amount", value: \.amountDisplay) { statement in
+                Text(statement.amountDisplay ?? "")
                     .monospacedDigit()
             }
             .alignment(.trailing)
             .customizationID("amount")
-            TableColumn("Reference", value: \.reference)
-                .customizationID("reference")
+            
+            TableColumn("Reference", value: \.reference) { statement in
+                Text(statement.reference ?? "")
+            }
+            .customizationID("reference")
+            
             TableColumn("Notes", value: \.notes)
                 .customizationID("notes")
-            TableColumn("Linked Invoice") { statement in
+            
+            TableColumn("Linked Invoice", value: \.matchedInvoice?.path) { statement in
                 Text(statement.linkedFilePath ?? "")
             }
             .defaultVisibility(.hidden)
@@ -129,7 +136,7 @@ struct BankStatementsView: View {
                 BankStatementMatcher.autoLink(modelContext: modelContext)
             }
         }
-
+        
         ToolbarItemGroup(placement: .principal) {
             Button("Generate Sample Data", systemImage: "plus") {
                 BankStatement.generateMockData(modelContext: modelContext)

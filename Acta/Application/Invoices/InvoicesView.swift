@@ -93,43 +93,51 @@ struct InvoicesView: View {
     
     private var table: some View {
         Table(sortedInvoices, selection: $selection, sortOrder: $sortOrder, columnCustomization: $columnCustomization) {
-            TableColumn("", value: \.status.rawValue) { invoice in
+            TableColumn("", value: \.status) { invoice in
                 invoice.status.icon
                     .help(invoice.status.label)
             }
-            .width(16)
+            .width(14)
             .disabledCustomizationBehavior(.all)
             .customizationID("status")
 
-            TableColumn("Vendor", value: \.vendorName)
+            TableColumn("Vendor", value: \.vendorName) { invoice in
+                Text(invoice.vendorName ?? "")
+            }
                 .customizationID("vendorName")
             
-            TableColumn("Date") { invoice in
-                Text(invoice.date?.formatted(date: .numeric, time: .omitted) ?? "N/A")
+            TableColumn("Date", value: \.date) { invoice in
+                Text(invoice.date?.formatted(.fixedWidthDate) ?? "")
             }
             .customizationID("invoiceDate")
             
-            TableColumn("Invoice #", value: \.invoiceNo)
+            TableColumn("Invoice #", value: \.invoiceNo) { invoice in
+                Text(invoice.invoiceNo ?? "")
+            }
                 .customizationID("invoiceNumber")
 
-            TableColumn("Filename") { invoice in
-                Text(invoice.path ?? "N/A")
+            TableColumn("Filename", value: \.path) { invoice in
+                Text(invoice.path ?? "")
             }
             .customizationID("filename")
 
-            TableColumn("Pre Tax") { invoice in
+            TableColumn("Pre Tax", value: \.preTaxAmount) { invoice in
                 Text(invoice.getPreTaxAmountString())
+                    .monospacedDigit()
             }
+            .alignment(.trailing)
             .customizationID("preTaxAmount")
             .defaultVisibility(.hidden)
             
-            TableColumn("Tax") { invoice in
+            TableColumn("Tax", value: \.taxPercentage) { invoice in
                 Text(invoice.getTaxPercentage())
+                    .monospacedDigit()
             }
+            .alignment(.trailing)
             .customizationID("taxPercentage")
             .defaultVisibility(.hidden)
             
-            TableColumn("Total") { invoice in
+            TableColumn("Total", value: \.totalAmount) { invoice in
                 Text(invoice.getPostTaxAmountString())
                     .monospacedDigit()
             }
