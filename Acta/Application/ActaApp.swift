@@ -119,6 +119,7 @@ struct ActaApp: App {
             initError = .unknown(error.localizedDescription)
         }
     }
+
     
     enum MainView: String, Identifiable, CaseIterable {
         case invoices

@@ -15,7 +15,7 @@
 			<key>NSUbiquitousContainerName</key>
 			<string>Acta</string>
 			<key>NSUbiquitousContainerSupportedFolderLevels</key>
-			<string>ANY</string>
+			<string>Any</string>
 		</dict>
 	</dict>
 </dict>

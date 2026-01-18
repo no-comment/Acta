@@ -25,6 +25,6 @@ enum APIKeyStore {
     }
 
     private static func makeKeychain() -> Keychain {
-        Keychain(service: service)
+        Keychain(service: service, accessGroup: "WR2SRBM777.xyz.no-comment.Acta")
     }
 }

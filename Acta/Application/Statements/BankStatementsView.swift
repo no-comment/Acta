@@ -231,17 +231,18 @@ struct BankStatementsView: View {
             .disabled(!statements.contains { $0.matchedInvoice != nil })
         }
         
-        ToolbarItemGroup(placement: .principal) {
-            Button("Generate Sample Data", systemImage: "plus") {
-                BankStatement.generateMockData(modelContext: modelContext)
-            }
-            
-            Button("Delete All", systemImage: "trash", role: .destructive) {
-                for statement in statements {
-                    modelContext.delete(statement)
-                }
-            }
-        }
+        // MARK: Mock Data Buttons (commented out for production)
+//        ToolbarItemGroup(placement: .principal) {
+//            Button("Generate Sample Data", systemImage: "plus") {
+//                BankStatement.generateMockData(modelContext: modelContext)
+//            }
+//
+//            Button("Delete All", systemImage: "trash", role: .destructive) {
+//                for statement in statements {
+//                    modelContext.delete(statement)
+//                }
+//            }
+//        }
     }
     
     private var dropOverlay: some View {

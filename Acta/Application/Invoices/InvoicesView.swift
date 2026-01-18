@@ -271,31 +271,32 @@ struct InvoicesView: View {
             .help("Open Invoice Review")
         }
 
-        ToolbarItemGroup(placement: .principal) {
-            Button("Show Counts", systemImage: "number") {
-                print("Invoices: \(invoices.count), TagGroups: \(tagGroups.count), Tags: \(tags.count)")
-            }
-
-            Button("Generate Sample Data", systemImage: "plus") {
-                TagGroup.generateMockData(modelContext: modelContext)
-                Tag.generateMockData(modelContext: modelContext)
-                Invoice.generateMockData(modelContext: modelContext)
-            }
-
-            Button("Delete All", systemImage: "trash", role: .destructive) {
-                for invoice in invoices {
-                    modelContext.delete(invoice)
-                }
-
-                for group in tagGroups {
-                    modelContext.delete(group)
-                }
-
-                for tag in tags {
-                    modelContext.delete(tag)
-                }
-            }
-        }
+        // MARK: Mock Data Buttons (commented out for production)
+//        ToolbarItemGroup(placement: .principal) {
+//            Button("Show Counts", systemImage: "number") {
+//                print("Invoices: \(invoices.count), TagGroups: \(tagGroups.count), Tags: \(tags.count)")
+//            }
+//
+//            Button("Generate Sample Data", systemImage: "plus") {
+//                TagGroup.generateMockData(modelContext: modelContext)
+//                Tag.generateMockData(modelContext: modelContext)
+//                Invoice.generateMockData(modelContext: modelContext)
+//            }
+//
+//            Button("Delete All", systemImage: "trash", role: .destructive) {
+//                for invoice in invoices {
+//                    modelContext.delete(invoice)
+//                }
+//
+//                for group in tagGroups {
+//                    modelContext.delete(group)
+//                }
+//
+//                for tag in tags {
+//                    modelContext.delete(tag)
+//                }
+//            }
+//        }
     }
     
     // MARK: - Logic
