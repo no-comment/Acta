@@ -6,6 +6,7 @@ import SwiftUI
 final class BankStatement {
     var account: String?
     var date: Date?
+    var vendor: String?
     var reference: String?
     var amount: Double?
     var currency: String?
@@ -13,9 +14,10 @@ final class BankStatement {
     
     var matchedInvoice: Invoice?
     
-    init(account: String?, date: Date, reference: String, amount: Double?, currency: String? = nil, notes: String = "") {
+    init(account: String?, date: Date, vendor: String?, reference: String, amount: Double?, currency: String? = nil, notes: String = "") {
         self.account = account
         self.date = date
+        self.vendor = vendor
         self.reference = reference
         self.amount = amount
         self.currency = currency
@@ -88,7 +90,7 @@ extension BankStatement {
 //        guard let nocommentTag = allTags?.first(where: { $0.title == "no-comment" }) else { return }
 //        guard let privateTag = allTags?.first(where: { $0.title == "private" }) else { return }
                 
-        let statement1 = BankStatement(account: "N26", date: Date.now, reference: "Apple Inc.; APPLE DEVELOPER 1 YEAR; CAMERON SHEMILT", amount: 341.37, currency: "$", notes: "Apple Developer Licence")
+        let statement1 = BankStatement(account: "N26", date: Date.now, vendor: "Apple Inc.", reference: "Apple Inc.; APPLE DEVELOPER 1 YEAR; CAMERON SHEMILT", amount: 341.37, currency: "$", notes: "Apple Developer Licence")
                 
         modelContext.insert(statement1)
     }

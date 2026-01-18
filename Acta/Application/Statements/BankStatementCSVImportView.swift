@@ -15,6 +15,7 @@ struct BankStatementCSVImportView: View {
     @State private var rowEnd = 0
 
     @State private var dateColumn = 0
+    @State private var vendorColumn = 0
     @State private var referenceColumn = 0
     @State private var amountColumn = 0
     @State private var currencyColumn = -1
@@ -477,6 +478,7 @@ struct BankStatementCSVImportView: View {
             let statement = BankStatement(
                 account: accountValue,
                 date: date,
+                vendor: "", // TODO: Add vendor
                 reference: reference,
                 amount: amountValue,
                 currency: currencyValue
