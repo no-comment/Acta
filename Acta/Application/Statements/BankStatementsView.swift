@@ -16,9 +16,52 @@ struct BankStatementsView: View {
     @State private var importURL: URL?
     @State private var errorMessage: String?
     @State private var showError = false
+
+    // Search state
+    @State private var searchText = ""
+    @State private var searchTokens: [BankStatementSearchToken] = []
+
+    private var suggestedTokens: [BankStatementSearchToken] {
+        guard !searchText.isEmpty else { return [] }
+        var tokens: [BankStatementSearchToken] = []
+
+        for field in BankStatementSearchToken.Field.allCases {
+            if field == .status {
+                let matchingStatuses = BankStatement.Status.allCases.filter {
+                    $0.label.lowercased().contains(searchText.lowercased())
+                }
+                for status in matchingStatuses {
+                    tokens.append(BankStatementSearchToken(field: .status, value: status.label))
+                }
+            } else {
+                tokens.append(BankStatementSearchToken(field: field, value: searchText))
+            }
+        }
+
+        return tokens
+    }
     
+    private var filteredStatements: [BankStatement] {
+        var result = statements
+
+        for token in searchTokens {
+            result = result.filter { token.matches($0) }
+        }
+
+        if !searchText.isEmpty {
+            let searchToken = BankStatementSearchToken(field: .all, value: searchText)
+            result = result.filter { searchToken.matches($0) }
+        }
+
+        return result
+    }
+
     private var sortedStatements: [BankStatement] {
-        self.statements
+        filteredStatements.sorted(using: sortOrder)
+    }
+
+    private var isSearching: Bool {
+        !searchText.isEmpty || !searchTokens.isEmpty
     }
     
     private var selectedStatement: BankStatement? {
@@ -39,6 +82,29 @@ struct BankStatementsView: View {
     
     var body: some View {
         content
+            .searchable(text: $searchText, tokens: $searchTokens, prompt: "Search statements") { token in
+                if token.field == .all {
+                    Text(token.value)
+                } else {
+                    Text("\(token.field.rawValue): \(token.value)")
+                }
+            }
+            .searchSuggestions {
+                if !searchText.isEmpty {
+                    ForEach(suggestedTokens) { token in
+                        let matchCount = statements.filter { token.matches($0) }.count
+                        if matchCount > 0 {
+                            HStack {
+                                Label("\(token.field.rawValue): \(token.value)", systemImage: token.field.iconName)
+                                Spacer()
+                                Text("\(matchCount)")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .searchCompletion(token)
+                        }
+                    }
+                }
+            }
             .toolbar(content: toolbar)
             .inspector(isPresented: showInspector, content: {
                 if let selectedStatement {
@@ -72,8 +138,8 @@ struct BankStatementsView: View {
     private var content: some View {
         if self.statements.isEmpty {
             ContentUnavailableView("No Bank Statements", systemImage: "tray.and.arrow.down", description: Text("Drop a CSV file to import your first bank statement"))
-        } else if self.sortedStatements.isEmpty {
-            ContentUnavailableView("No Match", systemImage: "text.page.badge.magnifyingglass", description: Text("There was no match for your search parameters"))
+        } else if self.sortedStatements.isEmpty && isSearching {
+            ContentUnavailableView.search(text: searchText)
         } else {
             table
         }
