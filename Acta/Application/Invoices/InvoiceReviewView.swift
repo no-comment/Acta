@@ -7,7 +7,7 @@ struct InvoiceReviewView: View {
     private var allInvoices: [Invoice]
     
     private var unreviewedInvoices: [Invoice] {
-        allInvoices.filter { $0.status != .ocrVerified }
+        allInvoices.filter { $0.status == .processed }
     }
     
     @State private var currentInvoiceID: Invoice.ID?
