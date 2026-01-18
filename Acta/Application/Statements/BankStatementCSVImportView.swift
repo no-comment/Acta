@@ -255,10 +255,9 @@ struct BankStatementCSVImportView: View {
 
                 GroupBox("Blacklist") {
                     VStack(alignment: .leading, spacing: 8) {
-                        TokenField(tokens: $blacklistTokens, placeholder: "Reference contains...")
-                            .frame(minHeight: 24)
+                        TokenFieldView(tokens: $blacklistTokens, placeholder: "Comma separated tokens")
 
-                        Text("Ignore rows whose reference contains any of these tokens.")
+                        Text("Ignore rows whose reference or vendor contains any of these comma separated tokens.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -412,13 +411,13 @@ struct BankStatementCSVImportView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            HStack {
+            HStack(spacing: 16) {
                 Stepper(value: start, in: 0...maxValue) {
                     Text("Start \(start.wrappedValue + 1)")
                 }
-            }
 
-            HStack {
+                Spacer(minLength: 12)
+
                 Stepper(value: end, in: 0...maxValue) {
                     Text("End \(end.wrappedValue + 1)")
                 }
@@ -713,6 +712,7 @@ struct BankStatementCSVImportView: View {
         return sanitized
     }
 
+
     private func resolveCurrency(from column: Int, row: [String], fallback: String?) -> String? {
         guard column >= 0 else { return normalizeCurrency(fallback) }
         let raw = cellValue(row: row, column: column)
@@ -730,8 +730,13 @@ struct BankStatementCSVImportView: View {
         let reference = cellValue(row: row, column: referenceColumn)
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
-        guard !reference.isEmpty else { return false }
-        return blacklist.contains { reference.contains($0) }
+        let vendor = cellValue(row: row, column: vendorColumn)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        if reference.isEmpty, vendor.isEmpty { return false }
+        return blacklist.contains { token in
+            reference.contains(token) || vendor.contains(token)
+        }
     }
 
 }
