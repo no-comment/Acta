@@ -211,7 +211,9 @@ struct InvoiceFormView: View {
         
         let currency = invoice.currency?.trimmingCharacters(in: .whitespacesAndNewlines)
         let currencyPrefix = currency?.isEmpty == false ? "\(currency!) " : ""
-        return "Pre-tax + tax does not match total. Expected \(currencyPrefix)\(expectedTotal.formatted(.number)), got \(currencyPrefix)\(total.formatted(.number))."
+        let expectedStr = Formatters.amount.string(from: NSNumber(value: expectedTotal)) ?? "\(expectedTotal)"
+        let totalStr = Formatters.amount.string(from: NSNumber(value: total)) ?? "\(total)"
+        return "Pre-tax + tax does not match total. Expected \(currencyPrefix)\(expectedStr), got \(currencyPrefix)\(totalStr)."
     }
     
     private func warningView(message: String) -> some View {

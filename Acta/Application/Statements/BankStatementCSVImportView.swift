@@ -552,17 +552,9 @@ struct BankStatementCSVImportView: View {
     }
 
     private func formatAmount(_ amount: Double, currency: String?) -> String {
-        let formatted = amountFormatter.string(from: NSNumber(value: amount)) ?? amount.formatted()
+        let formatted = Formatters.amount.string(from: NSNumber(value: amount)) ?? amount.formatted()
         guard let currency, !currency.isEmpty else { return formatted }
         return "\(formatted) \(currency)"
-    }
-
-    private var amountFormatter: NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        return formatter
     }
 
     private func normalizeRanges() {

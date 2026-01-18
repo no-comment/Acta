@@ -21,6 +21,10 @@ struct InvoicesView: View {
     @State private var selection: Invoice.ID?
     @State private var showDeleteConfirmation = false
     @State private var pendingDeleteIDs: Set<Invoice.ID> = []
+
+    // Search state
+    @State private var searchText = ""
+    @State private var searchTokens: [InvoiceSearchToken] = []
     
     private var selectedInvoice: Invoice? {
         guard let selection else { return nil }
@@ -38,14 +42,58 @@ struct InvoicesView: View {
         )
     }
     
+    private var suggestedTokens: [InvoiceSearchToken] {
+        guard !searchText.isEmpty else { return [] }
+        var tokens: [InvoiceSearchToken] = []
+
+        for field in InvoiceSearchToken.Field.allCases {
+            if field == .status {
+                // For status, suggest matching status labels instead of raw search text
+                let matchingStatuses = Invoice.Status.allCases.filter {
+                    $0.label.lowercased().contains(searchText.lowercased())
+                }
+                for status in matchingStatuses {
+                    tokens.append(InvoiceSearchToken(field: .status, value: status.label))
+                }
+            } else {
+                tokens.append(InvoiceSearchToken(field: field, value: searchText))
+            }
+        }
+
+        return tokens
+    }
+
+    private var filteredInvoices: [Invoice] {
+        var result = invoices
+
+        // Apply token filters (AND logic between tokens)
+        for token in searchTokens {
+            result = result.filter { token.matches($0) }
+        }
+
+        // Apply free-text search (OR across all fields)
+        if !searchText.isEmpty {
+            let searchToken = InvoiceSearchToken(field: .all, value: searchText)
+            result = result.filter { searchToken.matches($0) }
+        }
+
+        return result
+    }
+
     private var sortedInvoices: [Invoice] {
-        invoices.sorted(using: sortOrder)
+        filteredInvoices.sorted(using: sortOrder)
+    }
+
+    private var isSearching: Bool {
+        !searchText.isEmpty || !searchTokens.isEmpty
     }
 
     @ViewBuilder
     private var content: some View {
         if invoices.isEmpty {
             ContentUnavailableView("No Invoices", systemImage: "doc.text", description: Text("Drop PDF files to import your first invoice"))
+        } else if sortedInvoices.isEmpty && isSearching {
+            ContentUnavailableView.search(text: searchText)
         } else {
             table
         }
@@ -69,6 +117,29 @@ struct InvoicesView: View {
 
     var body: some View {
         content
+            .searchable(text: $searchText, tokens: $searchTokens, prompt: "Search invoices") { token in
+                if token.field == .all {
+                    Text(token.value)
+                } else {
+                    Text("\(token.field.rawValue): \(token.value)")
+                }
+            }
+            .searchSuggestions {
+                if !searchText.isEmpty {
+                    ForEach(suggestedTokens) { token in
+                        let matchCount = invoices.filter { token.matches($0) }.count
+                        if matchCount > 0 {
+                            HStack {
+                                Label("\(token.field.rawValue): \(token.value)", systemImage: token.field.iconName)
+                                Spacer()
+                                Text("\(matchCount)")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .searchCompletion(token)
+                        }
+                    }
+                }
+            }
             .toolbar(content: { self.toolbar })
             .inspector(isPresented: showInspector, content: {
                 if let selectedInvoice {
@@ -107,7 +178,7 @@ struct InvoicesView: View {
                 .customizationID("vendorName")
             
             TableColumn("Date", value: \.date) { invoice in
-                Text(invoice.date?.formatted(.fixedWidthDate) ?? "")
+                Text(invoice.date.map { Formatters.date.string(from: $0) } ?? "")
             }
             .customizationID("invoiceDate")
             

@@ -74,7 +74,7 @@ extension Invoice {
 
     func getTaxPercentage() -> String {
         guard let taxPercentage else { return "" }
-        return taxPercentage.formatted(.percent)
+        return Formatters.tax.string(from: NSNumber(value: taxPercentage)) ?? taxPercentage.formatted(.percent)
     }
 
     func getTags(for group: TagGroup) -> [Tag] {
@@ -84,17 +84,10 @@ extension Invoice {
     }
 
     private func formatAmount(_ amount: Double, currency: String) -> String {
-        let formatted = Invoice.amountFormatter.string(from: NSNumber(value: amount)) ?? amount.formatted()
+        let formatted = Formatters.amount.string(from: NSNumber(value: amount)) ?? amount.formatted()
         return "\(formatted) \(currency)"
     }
 
-    private static let amountFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        return formatter
-    }()
 }
 
 extension Invoice {

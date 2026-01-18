@@ -59,7 +59,7 @@ struct BankStatementInvoicePickerView: View {
                 }
                 
                 Labeled("Payment Date") {
-                    Text(statement.date?.formatted(.fixedWidthDate) ?? "N/A")
+                    Text(statement.date.map { Formatters.date.string(from: $0) } ?? "N/A")
                         .fontDesign(.monospaced)
                 }
                 
@@ -95,7 +95,7 @@ struct BankStatementInvoicePickerView: View {
             .customizationID("status")
             
             TableColumn("Date", value: \.date) { invoice in
-                Text(invoice.date?.formatted(.fixedWidthDate) ?? "")
+                Text(invoice.date.map { Formatters.date.string(from: $0) } ?? "")
             }
             .customizationID("invoiceDate")
             

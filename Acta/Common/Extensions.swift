@@ -46,13 +46,3 @@ extension Binding where Value == Date? {
         )
     }
 }
-
-// MARK: - Other
-extension FormatStyle where Self == Date.FormatStyle {
-    static var fixedWidthDate: Date.FormatStyle {
-        Date.FormatStyle()
-            .year(.defaultDigits)
-            .month(.twoDigits)
-            .day(.twoDigits)
-    }
-}

@@ -26,7 +26,7 @@ final class BankStatement {
 extension BankStatement {
     var amountDisplay: String? {
         guard let amount else { return nil }
-        let formatted = BankStatement.amountFormatter.string(from: NSNumber(value: amount)) ?? amount.formatted()
+        let formatted = Formatters.amount.string(from: NSNumber(value: amount)) ?? amount.formatted()
         guard let currency, !currency.isEmpty else { return formatted }
         return "\(formatted) \(currency)"
     }
@@ -44,13 +44,6 @@ extension BankStatement {
         return matchedInvoice.status == .statementVerified ? .verified : .linked
     }
 
-    private static let amountFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        return formatter
-    }()
 }
 
 extension BankStatement {

@@ -95,7 +95,7 @@ struct BankStatementsView: View {
             .customizationID("accountName")
             
             TableColumn("Date", value: \.date) { statement in
-                Text(statement.date?.formatted(.fixedWidthDate) ?? "N/A")
+                Text(statement.date.map { Formatters.date.string(from: $0) } ?? "N/A")
             }
             .customizationID("date")
             
