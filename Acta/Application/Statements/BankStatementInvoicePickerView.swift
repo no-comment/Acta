@@ -52,6 +52,11 @@ struct BankStatementInvoicePickerView: View {
                         statement.status.icon
                     }
                 }
+                .onTapGesture(perform: {
+                    if statement.status > .unlinked {
+                        self.selection = statement.matchedInvoice?.id
+                    }
+                })
                 
                 Labeled("Account Name") {
                     Text(statement.account ?? "N/A")
