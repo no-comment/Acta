@@ -49,6 +49,10 @@ struct BankStatementForm: View {
             Labeled("Reference") {
                 TextField("Reference", text: $statement.reference.orEmpty)
             }
+
+            Labeled("Vendor") {
+                TextField("Vendor", text: $statement.vendor.orEmpty)
+            }
             
             Labeled("Notes") {
                 TextField("Notes", text: $statement.notes)

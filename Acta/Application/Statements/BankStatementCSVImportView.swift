@@ -132,12 +132,17 @@ struct BankStatementCSVImportView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 GroupBox("Delimiter") {
-                    Picker("Delimiter", selection: $delimiter) {
-                        ForEach(CSVDelimiter.allCases) { option in
-                            Text(option.label).tag(option)
+                    HStack {
+                        Text("Delimiter")
+                        Spacer()
+                        Picker("", selection: $delimiter) {
+                            ForEach(CSVDelimiter.allCases) { option in
+                                Text(option.label).tag(option)
+                            }
                         }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
                     }
-                    .pickerStyle(.menu)
                 }
 
                 GroupBox("Crop") {
@@ -148,13 +153,18 @@ struct BankStatementCSVImportView: View {
 
                 GroupBox("Column Mapping") {
                     VStack(alignment: .leading, spacing: 12) {
-                        Picker("Date column", selection: $dateColumn) {
-                            ForEach(columnIndices, id: \.self) { column in
-                                Text(columnPickerLabel(for: column)).tag(column)
+                        HStack {
+                            Text("Date column")
+                            Spacer()
+                            Picker("", selection: $dateColumn) {
+                                ForEach(columnIndices, id: \.self) { column in
+                                    Text(columnPickerLabel(for: column)).tag(column)
+                                }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .disabled(maxColumns == 0)
                         }
-                        .pickerStyle(.menu)
-                        .disabled(maxColumns == 0)
 
                         HStack(spacing: 8) {
                             TextField("Date format", text: $dateFormat)
@@ -167,41 +177,74 @@ struct BankStatementCSVImportView: View {
                             }
                         }
 
-                        Picker("Reference column", selection: $referenceColumn) {
-                            ForEach(columnIndices, id: \.self) { column in
-                                Text(columnPickerLabel(for: column)).tag(column)
+                        HStack {
+                            Text("Reference column")
+                            Spacer()
+                            Picker("", selection: $referenceColumn) {
+                                ForEach(columnIndices, id: \.self) { column in
+                                    Text(columnPickerLabel(for: column)).tag(column)
+                                }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .disabled(maxColumns == 0)
                         }
-                        .pickerStyle(.menu)
-                        .disabled(maxColumns == 0)
 
-                        Picker("Amount column", selection: $amountColumn) {
-                            ForEach(columnIndices, id: \.self) { column in
-                                Text(columnPickerLabel(for: column)).tag(column)
+                        HStack {
+                            Text("Vendor column")
+                            Spacer()
+                            Picker("", selection: $vendorColumn) {
+                                ForEach(columnIndices, id: \.self) { column in
+                                    Text(columnPickerLabel(for: column)).tag(column)
+                                }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .disabled(maxColumns == 0)
                         }
-                        .pickerStyle(.menu)
-                        .disabled(maxColumns == 0)
 
-                        Picker("Currency column", selection: $currencyColumn) {
-                            Text("Same as Amount").tag(-1)
-                            ForEach(columnIndices, id: \.self) { column in
-                                Text(columnPickerLabel(for: column)).tag(column)
+                        HStack {
+                            Text("Amount column")
+                            Spacer()
+                            Picker("", selection: $amountColumn) {
+                                ForEach(columnIndices, id: \.self) { column in
+                                    Text(columnPickerLabel(for: column)).tag(column)
+                                }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .disabled(maxColumns == 0)
                         }
-                        .pickerStyle(.menu)
-                        .disabled(maxColumns == 0)
+
+                        HStack {
+                            Text("Currency column")
+                            Spacer()
+                            Picker("", selection: $currencyColumn) {
+                                Text("Same as Amount").tag(-1)
+                                ForEach(columnIndices, id: \.self) { column in
+                                    Text(columnPickerLabel(for: column)).tag(column)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .disabled(maxColumns == 0)
+                        }
                     }
                 }
 
                 GroupBox("Amount") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Picker("Decimal separator", selection: $decimalSeparator) {
-                            ForEach(DecimalSeparator.allCases) { option in
-                                Text(option.label).tag(option)
+                        HStack {
+                            Text("Decimal separator")
+                            Spacer()
+                            Picker("", selection: $decimalSeparator) {
+                                ForEach(DecimalSeparator.allCases) { option in
+                                    Text(option.label).tag(option)
+                                }
                             }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
                         }
-                        .pickerStyle(.menu)
                     }
                 }
 
@@ -356,6 +399,7 @@ struct BankStatementCSVImportView: View {
     private func selectedMappingLabel(for index: Int) -> String {
         var labels: [String] = []
         if index == dateColumn { labels.append("Date") }
+        if index == vendorColumn { labels.append("Vendor") }
         if index == referenceColumn { labels.append("Reference") }
         if index == amountColumn { labels.append("Amount") }
         if currencyColumn >= 0, index == currencyColumn { labels.append("Currency") }
@@ -413,6 +457,7 @@ struct BankStatementCSVImportView: View {
             rowEnd = maxRowIndex
             dateColumn = 0
             referenceColumn = min(1, maxColumnIndex)
+            vendorColumn = min(2, maxColumnIndex)
             dateFormat = guessDateFormat(in: parsedRows) ?? dateFormat
             amountColumn = guessAmountColumn(in: parsedRows) ?? min(2, maxColumnIndex)
             currencyColumn = -1
@@ -446,6 +491,7 @@ struct BankStatementCSVImportView: View {
 
         for row in filteredRows {
             let dateString = cellValue(row: row, column: dateColumn)
+            let vendor = cellValue(row: row, column: vendorColumn)
             let reference = cellValue(row: row, column: referenceColumn)
             let amount = cellValue(row: row, column: amountColumn)
 
@@ -475,10 +521,13 @@ struct BankStatementCSVImportView: View {
                 continue
             }
 
+            let trimmedVendor = vendor.trimmingCharacters(in: .whitespacesAndNewlines)
+            let vendorValue = trimmedVendor.isEmpty ? nil : trimmedVendor
+
             let statement = BankStatement(
                 account: accountValue,
                 date: date,
-                vendor: "", // TODO: Add vendor
+                vendor: vendorValue,
                 reference: reference,
                 amount: amountValue,
                 currency: currencyValue
@@ -575,6 +624,7 @@ struct BankStatementCSVImportView: View {
         if rowStart > rowEnd { rowStart = rowEnd }
 
         dateColumn = min(max(dateColumn, 0), maxColumnIndex)
+        vendorColumn = min(max(vendorColumn, 0), maxColumnIndex)
         referenceColumn = min(max(referenceColumn, 0), maxColumnIndex)
         amountColumn = min(max(amountColumn, 0), maxColumnIndex)
         if currencyColumn >= 0 {

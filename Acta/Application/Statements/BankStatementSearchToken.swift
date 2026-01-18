@@ -9,6 +9,7 @@ struct BankStatementSearchToken: Identifiable, Equatable, Hashable {
         case all = "All"
         case status = "Status"
         case account = "Account"
+        case vendor = "Vendor"
         case reference = "Reference"
         case amount = "Amount"
         case currency = "Currency"
@@ -21,6 +22,7 @@ struct BankStatementSearchToken: Identifiable, Equatable, Hashable {
             case .all: return "magnifyingglass"
             case .status: return "link.badge.plus"
             case .account: return "banknote"
+            case .vendor: return "building.2"
             case .reference: return "text.alignleft"
             case .amount: return "dollarsign"
             case .currency: return "coloncurrencysign"
@@ -42,6 +44,8 @@ struct BankStatementSearchToken: Identifiable, Equatable, Hashable {
             return statement.status.label.lowercased().contains(lowercasedValue)
         case .account:
             return statement.account?.lowercased().contains(lowercasedValue) ?? false
+        case .vendor:
+            return statement.vendor?.lowercased().contains(lowercasedValue) ?? false
         case .reference:
             return statement.reference?.lowercased().contains(lowercasedValue) ?? false
         case .amount:

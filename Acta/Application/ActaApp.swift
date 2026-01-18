@@ -88,6 +88,12 @@ struct ActaApp: App {
         }
         .modelContainer(DataStoreConfig.container)
 
+        Window("Review Links", id: "link-review") {
+            BankStatementLinkReviewView()
+                .environment(documentManager)
+        }
+        .modelContainer(DataStoreConfig.container)
+
         Settings {
             SettingsView()
         }

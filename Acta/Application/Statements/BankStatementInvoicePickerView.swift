@@ -73,6 +73,11 @@ struct BankStatementInvoicePickerView: View {
                         .fontDesign(.monospaced)
                         .valueColor(for: statement.amount)
                 }
+
+                Labeled("Vendor") {
+                    Text(statement.vendor ?? "N/A")
+                        .fontDesign(.monospaced)
+                }
                 
                 Labeled("Reference") {
                     Text(statement.reference ?? "N/A")

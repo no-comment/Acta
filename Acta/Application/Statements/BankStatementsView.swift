@@ -63,6 +63,13 @@ struct BankStatementsView: View {
     private var isSearching: Bool {
         !searchText.isEmpty || !searchTokens.isEmpty
     }
+
+    private var unapprovedLinkedStatements: [BankStatement] {
+        statements.filter { statement in
+            guard let invoice = statement.matchedInvoice else { return false }
+            return invoice.status != .statementVerified
+        }
+    }
     
     private var selectedStatement: BankStatement? {
         guard let selection else { return nil }
@@ -159,6 +166,11 @@ struct BankStatementsView: View {
                 Text(statement.account ?? "")
             }
             .customizationID("accountName")
+
+            TableColumn("Vendor", value: \.vendor) { statement in
+                Text(statement.vendor ?? "")
+            }
+            .customizationID("vendor")
             
             TableColumn("Date", value: \.date) { statement in
                 Text(statement.date.map { Formatters.date.string(from: $0) } ?? "N/A")
@@ -203,6 +215,11 @@ struct BankStatementsView: View {
                 BankStatementMatcher.autoLink(modelContext: modelContext)
             }
             .help("Auto Link")
+
+            Button("Review Links", image: .linkBadgeCheckmark) {
+                openWindow(id: "link-review")
+            }
+            .disabled(unapprovedLinkedStatements.isEmpty)
         }
         
         ToolbarItemGroup(placement: .principal) {
