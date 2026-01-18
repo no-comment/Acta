@@ -22,6 +22,12 @@ struct ContentView: View {
                     .font(.headline)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .showInvoices)) { _ in
+                mainView = .invoices
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .showBankStatements)) { _ in
+                mainView = .bankStatements
+            }
     }
     
     @ViewBuilder
@@ -69,6 +75,8 @@ struct ContentView: View {
 
 extension Notification.Name {
     static let importInvoice = Notification.Name("importInvoice")
+    static let showInvoices = Notification.Name("showInvoices")
+    static let showBankStatements = Notification.Name("showBankStatements")
 }
 
 #Preview {

@@ -51,6 +51,26 @@ struct ActaApp: App {
                 .keyboardShortcut("o", modifiers: [.command, .shift])
                 .disabled(documentManager == nil)
             }
+
+            CommandGroup(after: .sidebar) {
+                Divider()
+
+                Button {
+                    NotificationCenter.default.post(name: .showInvoices, object: nil)
+                } label: {
+                    Label("Show Invoices", systemImage: "doc.text")
+                }
+                .keyboardShortcut("1", modifiers: [.command])
+
+                Button {
+                    NotificationCenter.default.post(name: .showBankStatements, object: nil)
+                } label: {
+                    Label("Show Bank Statements", systemImage: "list.bullet.rectangle")
+                }
+                .keyboardShortcut("2", modifiers: [.command])
+
+                Divider()
+            }
         }
         
         WindowGroup("Details", for: ActaApp.WindowType.self) { $window in
